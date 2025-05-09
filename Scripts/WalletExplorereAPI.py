@@ -4,14 +4,19 @@ import time
 import os
 from bs4 import BeautifulSoup
 
-# funzione che mi fa la classifica dei servizi di gambling di wallter explorer secondo questi criteri:
-# 1. numero di transazioni
-# 2. numero di indirizzi
-# 3. somma incoming_txs primi 100 indirizzi
-# 4. notorietà del servizio
-# 5. media valore blocco utilizzato per poter stimare il periodo 
+#_______________________________________________________________________________________________________________________
 
 def get_wallet_ids(wallet_ids):
+    """
+    Function to get the wallet IDs from the WalletExplorer website.
+    It scrapes the website to find the gambling services and their wallet IDs.
+    
+    Args:
+        wallet_ids (list): A list to store the wallet IDs.
+        
+    Returns:
+        list: A list of wallet IDs associated with gambling services.
+    """
     base_url = "https://www.walletexplorer.com/"
     response = requests.get(base_url)
     soup = BeautifulSoup(response.text, "html.parser")
@@ -25,7 +30,19 @@ def get_wallet_ids(wallet_ids):
                 wallet_ids.append(wallet_id)
     return wallet_ids
 
+#_______________________________________________________________________________________________________________________
+
 def get_transaction_count(wallet_id):
+    """
+    Function to get the total number of transactions for a given wallet ID.
+
+    Args:
+        wallet_id (str): The ID of the wallet.
+
+    Returns:
+        int: The total number of transactions for the wallet.
+    """
+
     base_url = "https://www.walletexplorer.com/"
     response = requests.get(f"{base_url}/wallet/{wallet_id}")
     if response.status_code != 200:
@@ -40,7 +57,20 @@ def get_transaction_count(wallet_id):
         return int(transaction_count)
     return 0
 
+#_______________________________________________________________________________________________________________________
+
 def get_wallet_info(wallet_id, directory="Data/processed/addresses", output_file="Data/processed/info/wallets_info.json"):
+    """
+    Function to get wallet information including the number of addresses and transactions.
+
+    Args:
+        wallet_id (str): The ID of the wallet.
+        directory (str): The directory where the address files are stored.
+        output_file (str): The path to the output file where the wallet information will be saved.
+
+    Returns:
+        dict: A dictionary containing the wallet information.
+    """
 
     with open(f"{directory}/{wallet_id}_addresses.json", "r") as f:
         addresses = json.load(f)
@@ -65,3 +95,4 @@ def get_wallet_info(wallet_id, directory="Data/processed/addresses", output_file
 
     return wallet_info
 
+#_______________________________________________________________________________________________________________________
