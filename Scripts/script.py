@@ -6,7 +6,11 @@ def delete_files_in_folder(folder_path, base_name, n):
     Deletes all files in a specified folder that match a given file name.
     Args:
         folder_path (str): The path to the folder containing the files.
-        file_name (str): The name of the files to delete.
+        base_name (str): The name of the files to delete.
+        n (int): The index threshold for deletion.
+        
+    Returns:
+        None
     """
     for filename in os.listdir(folder_path):
         #inserisco l'index alla fine del nome del file
@@ -20,6 +24,6 @@ def delete_files_in_folder(folder_path, base_name, n):
                 os.remove(file_path)
                 print(f"Deleted {file_path}")
             else:
-                print(f"No files starting with {filename} found in {folder_path}")
+                print(f"No files starting with {base_name} found in {folder_path}")
 
 #delete_files_in_folder("Data/raw/transactions", "BitZillions.com_transactions", 12)

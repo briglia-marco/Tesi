@@ -1,4 +1,3 @@
-
 # funzione che mi fa la classifica dei servizi di gambling di wallter explorer secondo questi criteri:
 # 1. numero di transazioni
 # 2. numero di indirizzi
@@ -8,37 +7,49 @@
 
 import requests as req
 import pandas as pd
-from bs4 import BeautifulSoup
 import json
+from bs4 import BeautifulSoup
 from Scripts.WalletExplorereAPI import *
-
+from Scripts.fetch import *
 
 if __name__ == "__main__":
     
-    wallet_ids = []
-    # get_wallet_ids(wallet_ids)
+    directory = "Data/processed/addresses"
+    if not os.path.exists(directory) or len(os.listdir(directory)) == 0:
+        wallet_ids = []
+        get_wallet_ids(wallet_ids)
+    else:
+        wallet_ids = [f.split("_")[0] for f in os.listdir(directory)]
 
-    base_url = "https://www.walletexplorer.com/"
-    from_id = 0
+    for wallet_id in wallet_ids:
+        if not os.path.exists(f"{directory}/{wallet_id}_addresses.json"):
+            print(f"Downloading {wallet_id}...")
+            fetch_first_100_addresses(wallet_id, directory)
+        else:
+            print(f"First 100 for {wallet_id} already downloaded")
+            #SISTEMARE STAMPA SENNò 40 VOLTE
+            continue
     
-    # for wallet in wallet_ids:
-    #     api_url = (f"api/1/wallet-addresses?wallet={wallet}&from={from_id}&count=100")
-    #     response = req.get(base_url + api_url)
-    #     data = response.json()
-    #     directory = "Data/processed/addresses"
-        
-    #     if not os.path.exists(directory):
-    #         os.makedirs(directory)
-    #     with open(f"{directory}/{wallet}_addresses.json", "w") as f:
-    #         json.dump(data, f, indent=4)
+    directory_raw = "Data/raw/addresses"
+    '''
+    FUNZIONA PER SCARICARE TUTTI GLI INDIRIZZI
+    '''
+    # for wallet_id in wallet_ids:
+    #     if not os.path.exists(f"{directory_raw}/{wallet_id}_addresses.json"):
+    #         print(f"Downloading all addresses for {wallet_id}...")
+    #         fetch_all_addresses(wallet_id, directory_raw)
+    #     else:
+    #         print("All addresses for every wallet already downloaded")
+    #         break
     
-    # funzioni che fanno la classifica dei servizi di gambling secondo i criteri
-    # prendere i dati da ogni json e analizzarli file per file assegnando i punti per la classifica
-    
-    for f in os.listdir("Data/processed/addresses"):
-        wallet_id = f.split("_")[0]
-        get_wallet_info(wallet_id)
+    # for wallet_id in wallet_ids:
+    #     get_wallet_info(wallet_id)
 
+#______________________________________________________________________________________________________________________
+
+	# •	Costruire la classifica preliminare tra i servizi di gambling
+	# •	Selezionare i migliori candidati e scaricare tutte le loro transazioni
+	# •	Procedere alla parte di analisi comportamentale su mittenti → pattern Martingala/d’Alembert
 
 
 
