@@ -203,9 +203,7 @@ def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
         all_addresses.extend(addresses)
         from_index += count
         
-        pbar.update(len(addresses))  # aggiorna barra
-
-        print(f"Fetched {len(addresses)} addresses, total: {len(all_addresses)}")
+        pbar.update(len(addresses)) 
 
         while len(all_addresses) >= chunk_size:
             chunk = all_addresses[:chunk_size]
@@ -219,6 +217,6 @@ def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
         save_addresses_chunk(all_addresses, wallet_id, label, file_index, output_dir)
     
     pbar.close()
-    print(f"Completed address download for {wallet_id}")
+    print(f"Completed address download for {wallet_id}\n")
     
 #_______________________________________________________________________________________________________________________
