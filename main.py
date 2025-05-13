@@ -23,7 +23,8 @@ if __name__ == "__main__":
             continue
     print("All addresses for every wallet already downloaded")
     
-    directory_raw = "Data/raw/addresses"
+    directory_raw_addresses = "Data/raw/addresses"
+    directory_raw_transactions = "Data/raw/transactions"
 
 #______________________________________________________________________________________________________________________
     
@@ -65,12 +66,21 @@ if __name__ == "__main__":
     print(wallet_ids)
         
     for wallet_id in wallet_ids:
-        if not os.path.exists(f"{directory_raw}/{wallet_id}_addresses.json"):
+        if not os.path.exists(f"{directory_raw_addresses}/{wallet_id}_addresses_1.json"):
             print(f"Downloading all addresses for {wallet_id}...")
-            fetch_all_addresses(wallet_id, directory_raw)
+            fetch_all_addresses(wallet_id, directory_raw_addresses)
         else:
             continue
     print("All addresses for every wallet downloaded")
+    
+    for wallet_id in wallet_ids:
+        if not os.path.exists(f"{directory_raw_transactions}/{wallet_id}_transactions_1.json"):
+            print(f"Downloading all txs for {wallet_id}...")
+            fetch_wallet_transactions(wallet_id, directory_raw_transactions)
+        else:
+            continue
+    print("All transactions for every wallet downloaded")
+    
     
         
     

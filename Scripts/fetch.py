@@ -18,7 +18,7 @@ def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
     
 #_______________________________________________________________________________________________________________________
 
-def get_wallet_trx(wallet_id):
+def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
     """
     Fetches all transactions associated with a given wallet ID from the WalletExplorer API.
     """
@@ -29,13 +29,11 @@ def get_wallet_trx(wallet_id):
     chunk_size = 100_000
     file_index = 0
     all_transactions = []
-
-    output_dir = "Data/raw/transactions"
     os.makedirs(output_dir, exist_ok=True)
 
     print(f"Starting download for wallet: {wallet_id}")
-    
-    pbar = tqdm(desc=f"📦 {wallet_id} addresses", unit="addr", dynamic_ncols=True) 
+
+    pbar = tqdm(desc=f"📦 {wallet_id} transactions", unit="tx", dynamic_ncols=True)
 
     while True:
         url = f"{base_url}?wallet={wallet_id}&from={from_index}&count={count}"
@@ -75,8 +73,6 @@ def get_wallet_trx(wallet_id):
         all_transactions.extend(transactions)
         from_index += count
         pbar.update(len(transactions))  
-        
-        print(f"Downloaded {len(transactions)} transactions, total: {len(all_transactions)}")
 
         while len(all_transactions) >= chunk_size:
             chunk = all_transactions[:chunk_size]
