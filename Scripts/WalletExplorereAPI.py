@@ -32,6 +32,28 @@ def get_wallet_ids(wallet_ids):
 
 #_______________________________________________________________________________________________________________________
 
+def download_first_100_addresses(directory_addresses, get_wallet_ids, fetch_first_100_addresses):
+    """
+    Download the first 100 addresses for each wallet in the given directory.
+    If no wallets are present, fetch wallet IDs using get_wallet_ids.
+    """
+    if not os.path.exists(directory_addresses) or len(os.listdir(directory_addresses)) == 0:
+        wallet_ids = []
+        get_wallet_ids(wallet_ids)
+    else:
+        wallet_ids = [f.split("_")[0] for f in os.listdir(directory_addresses)]
+
+    for wallet_id in wallet_ids:
+        address_file = os.path.join(directory_addresses, f"{wallet_id}_addresses.json")
+        if not os.path.exists(address_file):
+            fetch_first_100_addresses(wallet_id, directory_addresses)
+        else:
+            continue
+
+    print("First 100 addresses for selected wallets downloaded.")
+
+#_______________________________________________________________________________________________________________________
+
 def get_transaction_count(wallet_id):
     """
     Function to get the total number of transactions for a given wallet ID.

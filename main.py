@@ -1,30 +1,23 @@
 import requests as req
 import pandas as pd
 import json
-from bs4 import BeautifulSoup
+import os
 from Scripts.WalletExplorereAPI import *
 from Scripts.fetch import *
 from Scripts.ranking import *
+from Scripts.data_processing import *
 
 if __name__ == "__main__":
-    
-    directory_addresses = "Data/processed/addresses"
-    if not os.path.exists(directory_addresses) or len(os.listdir(directory_addresses)) == 0:
-        wallet_ids = []
-        get_wallet_ids(wallet_ids)
-    else:
-        wallet_ids = [f.split("_")[0] for f in os.listdir(directory_addresses)]
 
-    for wallet_id in wallet_ids:
-        if not os.path.exists(f"{directory_addresses}/{wallet_id}_addresses.json"):
-            print(f"Downloading {wallet_id}...")
-            fetch_first_100_addresses(wallet_id, directory_addresses)
-        else:
-            continue
-    print("All addresses for every wallet already downloaded")
-    
+    directory_processed_100_addresses = "Data/processed/first_100_addresses"
     directory_raw_addresses = "Data/raw/addresses"
     directory_raw_transactions = "Data/raw/transactions"
+
+    download_first_100_addresses(
+        directory_addresses=directory_processed_100_addresses,
+        get_wallet_ids=get_wallet_ids,
+        fetch_first_100_addresses=fetch_first_100_addresses
+    )
 
 #______________________________________________________________________________________________________________________
     
@@ -50,38 +43,51 @@ if __name__ == "__main__":
     "Crypto-Games.net",
     "SwCPoker.eu"
     ]
-
-    df_wallets = build_wallets_dataframe(
+    
+    df_wallets = process_wallet_dataframe(
         wallets_info_path="Data/processed/info/wallets_info.json",
-        directory_addresses=directory_addresses,
-        known_services=known_services
+        directory_addresses=directory_processed_100_addresses,
+        known_services=known_services,
+        w1=w1, w2=w2, w3=w3, w4=w4, w5=w5
     )
 
-    columns_to_normalize = ["total_transactions", "total_addresses", "transactions_per_address", "first_100_transactions"]
-    df_wallets = normalize_columns(df_wallets, columns_to_normalize)
-
-    df_wallets = calculate_scores(df_wallets, w1, w2, w3, w4, w5)
-
-    wallet_ids = df_wallets["wallet_id"].iloc[1:15].tolist()
+    wallet_ids = df_wallets["wallet_id"].iloc[:15].tolist()
     print(wallet_ids)
-        
-    for wallet_id in wallet_ids:
-        if not os.path.exists(f"{directory_raw_addresses}/{wallet_id}_addresses_1.json"):
-            print(f"Downloading all addresses for {wallet_id}...")
-            fetch_all_addresses(wallet_id, directory_raw_addresses)
-        else:
-            continue
-    print("All addresses for every wallet downloaded")
-    
-    for wallet_id in wallet_ids:
-        if not os.path.exists(f"{directory_raw_transactions}/{wallet_id}_transactions_1.json"):
-            print(f"Downloading all txs for {wallet_id}...")
-            fetch_wallet_transactions(wallet_id, directory_raw_transactions)
-        else:
-            continue
-    print("All transactions for every wallet downloaded")
-    
-    
-        
-    
 
+    download_wallet_addresses(wallet_ids, directory_raw_addresses)
+    print("All addresses for selected wallets downloaded.")
+
+    download_wallet_transactions(wallet_ids, directory_raw_transactions)
+    print("All transactions for selected wallets downloaded.")
+    print("All data processing complete.")
+#______________________________________________________________________________________________________________________
+
+    directory_processed_addr = "Data/processed/addresses"
+    directory_processed_txs = "Data/processed/transactions"
+    
+    for wallet_id in wallet_ids:
+        merge_wallet_json_files(
+            wallet_id=wallet_id,
+            directory_input=directory_raw_addresses,
+            directory_output=directory_processed_addr,
+            output_suffix="addresses",
+            data_field="addresses",
+            count_field="addresses_count"
+        )
+        
+        merge_wallet_json_files(
+            wallet_id=wallet_id,
+            directory_input=directory_raw_transactions,
+            directory_output=directory_processed_txs,
+            output_suffix="transactions",
+            data_field="transactions",
+            count_field="transactions_count"
+        )
+        
+    print("All JSON files merged.")
+    
+#_______________________________________________________________________________________________________________________
+        
+    
+        
+    
