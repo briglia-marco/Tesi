@@ -2,7 +2,6 @@ import requests
 import json
 import time
 import os
-from bs4 import BeautifulSoup
 from tqdm import tqdm
 
 #_______________________________________________________________________________________________________________________
@@ -10,6 +9,15 @@ from tqdm import tqdm
 def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
     """
     Save a chunk of transactions to a JSON file.
+    
+    Args:
+        transactions (list): List of transactions to save.
+        wallet_id (str): The wallet ID associated with the transactions.
+        file_index (int): The index for the output file.
+        output_dir (str): The directory where the JSON file will be saved.
+        
+    Returns:
+        None
     """
     file_path = os.path.join(output_dir, f"{wallet_id}_transactions_{file_index}.json")
     with open(file_path, "w") as f:
@@ -21,6 +29,13 @@ def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
 def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
     """
     Fetches all transactions associated with a given wallet ID from the WalletExplorer API.
+    
+    Args:
+        wallet_id (str): The wallet ID to fetch transactions for.
+        output_dir (str): The directory where the JSON files will be saved.
+        
+    Returns:
+        list: A list of all transactions associated with the wallet ID.
     """
     base_url = "https://www.walletexplorer.com/api/1/wallet"
     from_index = 0
@@ -94,9 +109,11 @@ def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
 def fetch_first_100_addresses(wallet_id, output_dir):
     """
     Fetches the first 100 addresses associated with a given wallet ID and saves them to a JSON file.
+    
     Args:
         wallet_id (str): The wallet ID to fetch addresses for.
         output_dir (str): The directory where the JSON file will be saved.
+        
     Returns:
         dict: The JSON response containing the first 100 addresses.
     """
@@ -129,6 +146,16 @@ def fetch_first_100_addresses(wallet_id, output_dir):
 def save_addresses_chunk(addresses, wallet_id, label, file_index, output_dir):
     """
     Save a chunk of addresses to a JSON file.
+    
+    Args:
+        addresses (list): List of addresses to save.
+        wallet_id (str): The wallet ID associated with the addresses.
+        label (str): The label associated with the wallet.
+        file_index (int): The index for the output file.
+        output_dir (str): The directory where the JSON file will be saved.
+        
+    Returns:
+        None
     """
     chunk_data = {
         "found": True,
@@ -147,6 +174,13 @@ def save_addresses_chunk(addresses, wallet_id, label, file_index, output_dir):
 def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
     """
     Fetch all addresses associated with a given wallet ID from the WalletExplorer API.
+    
+    Args:
+        wallet_id (str): The wallet ID to fetch addresses for.
+        output_dir (str): The directory where the JSON files will be saved.
+        
+    Returns:
+        None
     """
     base_url = "https://www.walletexplorer.com/api/1/wallet-addresses"
     all_addresses = []

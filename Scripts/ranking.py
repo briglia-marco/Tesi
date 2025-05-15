@@ -6,6 +6,14 @@ import pandas as pd
 def build_wallets_dataframe(wallets_info_path, directory_addresses, known_services):
     """
     Build the initial dataframe with wallet statistics.
+    
+    Args:
+        wallets_info_path (str): Path to the wallets info JSON file.
+        directory_addresses (str): Directory containing wallet address files.
+        known_services (list): List of known gambling services.
+        
+    Returns:
+        pd.DataFrame: Dataframe with wallet statistics.
     """
     df = pd.DataFrame(columns=[
         "wallet_id", "total_transactions", "total_addresses",
@@ -42,6 +50,13 @@ def build_wallets_dataframe(wallets_info_path, directory_addresses, known_servic
 def normalize_columns(df, columns):
     """
     Normalize the specified columns of a dataframe using min-max scaling.
+    
+    Args:
+        df (pd.DataFrame): The dataframe to normalize.
+        columns (list): List of column names to normalize.
+        
+    Returns:
+        pd.DataFrame: The dataframe with normalized columns.
     """
     for col in columns:
         min_val = df[col].min()
@@ -54,6 +69,13 @@ def normalize_columns(df, columns):
 def calculate_scores(df, w1, w2, w3, w4, w5):
     """
     Calculate the weighted score for each wallet based on normalized columns.
+    
+    Args:
+        df (pd.DataFrame): The dataframe with normalized columns.
+        w1, w2, w3, w4, w5 (float): Weights for each column.
+        
+    Returns:
+        pd.DataFrame: The dataframe with a new 'score' column.
     """
     df["score"] = (
         w1 * df["total_transactions_norm"] +

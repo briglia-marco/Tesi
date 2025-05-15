@@ -1,6 +1,5 @@
 import requests
 import json
-import time
 import os
 from bs4 import BeautifulSoup
 
@@ -36,6 +35,14 @@ def download_first_100_addresses(directory_addresses, get_wallet_ids, fetch_firs
     """
     Download the first 100 addresses for each wallet in the given directory.
     If no wallets are present, fetch wallet IDs using get_wallet_ids.
+    
+    Args:
+        directory_addresses (str): Directory where the address files will be saved.
+        get_wallet_ids (function): Function to fetch wallet IDs.
+        fetch_first_100_addresses (function): Function to fetch the first 100 addresses for a wallet.
+        
+    Returns:
+        None
     """
     if not os.path.exists(directory_addresses) or len(os.listdir(directory_addresses)) == 0:
         wallet_ids = []
