@@ -101,6 +101,9 @@ if __name__ == "__main__":
     print("All JSON files merged.")
     print("All data processing complete.")
     
+    #print(df_wallets[["wallet_id", "first_tx_date", "last_tx_date", "peak_activity_year", "activity_span_years"]])
+    #df_wallets.to_excel("Data/processed/wallets_info.xlsx", date_format="yyyy-mm-dd", index=False)
+
 #_______________________________________________________________________________________________________________________
 
 

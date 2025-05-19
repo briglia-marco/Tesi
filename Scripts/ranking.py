@@ -2,7 +2,7 @@ import json
 import pandas as pd
 import os
 from datetime import datetime, timezone
-
+from collections import Counter
 
 #_______________________________________________________________________________________________________________________
 
@@ -77,16 +77,17 @@ def build_wallets_dataframe(wallets_info_path, directory_addresses, known_servic
 
 #_______________________________________________________________________________________________________________________
 
-def get_wallet_activity_period(wallet_id, directory_transactions):
+def get_wallet_activity_stats(wallet_id, directory_transactions, coverage_threshold=0.8):
     """
-    Return the first and last transaction date for a given wallet's transactions.
+    Return first and last transaction date, peak year and activity concentration span for a wallet.
 
     Args:
         wallet_id (str): Wallet ID.
         directory_transactions (str): Directory containing transaction JSON files.
+        coverage_threshold (float): Target coverage fraction for concentrated activity window (default 80%).
 
     Returns:
-        tuple: (first_date, last_date) as datetime.date objects, or (None, None) if no transactions found.
+        tuple: (first_date, last_date, peak_year, activity_span_years)
     """
     timestamps = []
 
@@ -98,36 +99,58 @@ def get_wallet_activity_period(wallet_id, directory_transactions):
                     timestamps.extend(tx["time"] for tx in data["transactions"] if "time" in tx)
 
     if not timestamps:
-        return (None, None)
+        return (None, None, None, None)
 
-    first_date = datetime.fromtimestamp(min(timestamps), tz=timezone.utc).date()
-    last_date = datetime.fromtimestamp(max(timestamps), tz=timezone.utc).date()
+    dates = [datetime.fromtimestamp(t, tz=timezone.utc) for t in timestamps]
+    years = [d.year for d in dates]
 
-    return first_date, last_date
+    year_counts = Counter(years)
+    total_txs = sum(year_counts.values())
+
+    peak_year, peak_count = year_counts.most_common(1)[0]
+
+    span = 0
+    while True:
+        years_in_span = [y for y in years if abs(y - peak_year) <= span]
+        coverage = len(years_in_span) / total_txs
+        if coverage >= coverage_threshold or span > (max(years) - min(years)):
+            break
+        span += 1
+
+    first_date = min(dates).date()
+    last_date = max(dates).date()
+
+    return first_date, last_date, peak_year, span
 
 #_______________________________________________________________________________________________________________________
 
 def calculate_wallet_activity(df_wallets, directory_transactions):
     """
-    Add first and last transaction date columns to an existing wallets dataframe.
+    Add activity stats columns (first/last tx date, peak year, year variance) to an existing wallets dataframe.
 
     Args:
         df_wallets (pd.DataFrame): DataFrame with wallet IDs.
         directory_transactions (str): Directory containing transaction JSON files.
 
     Returns:
-        pd.DataFrame: DataFrame updated with first_tx_date and last_tx_date columns.
+        pd.DataFrame: Updated DataFrame.
     """
     first_dates = []
     last_dates = []
+    peak_years = []
+    activity_spans = []
 
     for wallet_id in df_wallets["wallet_id"]:
-        first_date, last_date = get_wallet_activity_period(wallet_id, directory_transactions)
+        first_date, last_date, peak_year, activity_span = get_wallet_activity_stats(wallet_id, directory_transactions)
         first_dates.append(first_date)
         last_dates.append(last_date)
+        peak_years.append(peak_year)
+        activity_spans.append(activity_span)
 
     df_wallets["first_tx_date"] = first_dates
     df_wallets["last_tx_date"] = last_dates
+    df_wallets["peak_activity_year"] = peak_years
+    df_wallets["activity_span_years"] = activity_spans
 
     return df_wallets
 #_______________________________________________________________________________________________________________________
