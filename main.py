@@ -2,18 +2,24 @@ from Scripts.WalletExplorereAPI import *
 from Scripts.fetch import *
 from Scripts.ranking import *
 from Scripts.data_processing import *
+import os
 
 if __name__ == "__main__":
 
-    directory_processed_100_addresses = "Data/processed/first_100_addresses"
     directory_raw_addresses = "Data/raw/addresses"
     directory_raw_transactions = "Data/raw/transactions"
+    directory_processed_100_addresses = "Data/processed/first_100_addresses"
+    directory_processed_addr = "Data/processed/addresses"
+    directory_processed_txs = "Data/processed/transactions"
 
-    download_first_100_addresses(
-        directory_addresses=directory_processed_100_addresses,
-        get_wallet_ids=get_wallet_ids,
-        fetch_first_100_addresses=fetch_first_100_addresses
-    )
+    if not os.path.exists(directory_processed_100_addresses) or len(os.listdir(directory_processed_100_addresses)) == 0:
+        download_first_100_addresses(
+            directory_addresses=directory_processed_100_addresses,
+            get_wallet_ids=get_wallet_ids,
+            fetch_first_100_addresses=fetch_first_100_addresses
+        )
+    else:
+        print("First 100 addresses are already downloaded.")
 
 #______________________________________________________________________________________________________________________
     
@@ -48,7 +54,6 @@ if __name__ == "__main__":
     )
 
     wallet_ids = df_wallets["wallet_id"].iloc[:15].tolist()
-    print(wallet_ids)
 
     download_wallet_addresses(wallet_ids, directory_raw_addresses)
     print("All addresses for selected wallets downloaded.")
@@ -58,33 +63,37 @@ if __name__ == "__main__":
     print("All data processing complete.")
 #______________________________________________________________________________________________________________________
 
-    directory_processed_addr = "Data/processed/addresses"
-    directory_processed_txs = "Data/processed/transactions"
+    existing_merged_addresses = set(os.listdir(directory_processed_addr)) if os.path.exists(directory_processed_addr) else set()
+    existing_merged_transactions = set(os.listdir(directory_processed_txs)) if os.path.exists(directory_processed_txs) else set()
     
     for wallet_id in wallet_ids:
-        merge_wallet_json_files(
-            wallet_id=wallet_id,
-            directory_input=directory_raw_addresses,
-            directory_output=directory_processed_addr,
-            output_suffix="addresses",
-            data_field="addresses",
-            count_field="addresses_count"
-        )
-        
-        merge_wallet_json_files(
-            wallet_id=wallet_id,
-            directory_input=directory_raw_transactions,
-            directory_output=directory_processed_txs,
-            output_suffix="transactions",
-            data_field="transactions",
-            count_field="transactions_count"
-        )
-        
+        merged_address_file = f"{wallet_id}_addresses.json"
+        merged_transaction_file = f"{wallet_id}_transactions.json"
+
+        if not merged_address_file in existing_merged_addresses:
+            merge_wallet_json_files(
+                wallet_id=wallet_id,
+                directory_input=directory_raw_addresses,
+                directory_output=directory_processed_addr,
+                output_suffix="addresses",
+                data_field="addresses",
+                count_field="addresses_count"
+            )
+
+        if not merged_transaction_file in existing_merged_transactions:
+            merge_wallet_json_files(
+                wallet_id=wallet_id,
+                directory_input=directory_raw_transactions,
+                directory_output=directory_processed_txs,
+                output_suffix="transactions",
+                data_field="transactions",
+                count_field="transactions_count"
+            )
+
     print("All JSON files merged.")
     
 #_______________________________________________________________________________________________________________________
-        
-    
-    
-        
-    
+
+
+
+

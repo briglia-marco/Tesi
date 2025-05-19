@@ -121,3 +121,81 @@ def merge_wallet_json_files(wallet_id, directory_input, directory_output, output
 
 #_______________________________________________________________________________________________________________________
 
+def split_json_file(wallet_id, directory_input, directory_output, data_field, chunk_size=100000, suffix="addresses"):
+    """
+    Split a merged JSON file containing either addresses or transactions into multiple JSON files
+    each containing up to chunk_size objects.
+
+    Args:
+        wallet_id (str): Wallet ID of the file to split.
+        directory_input (str): Directory containing the merged JSON file.
+        directory_output (str): Directory where split files will be saved.
+        data_field (str): Key name of the list in the JSON (e.g. 'addresses' or 'transactions').
+        chunk_size (int, optional): Number of objects per file. Default is 100,000.
+        suffix (str, optional): Suffix for the output file ('addresses' or 'transactions').
+
+    Returns:
+        None
+    """
+    input_path = os.path.join(directory_input, f"{wallet_id}_{suffix}.json")
+    with open(input_path, "r") as f:
+        data = json.load(f)
+
+    items = data.get(data_field, [])
+    total_items = len(items)
+    os.makedirs(directory_output, exist_ok=True)
+
+    file_index = 1
+    for i in range(0, total_items, chunk_size):
+        chunk = items[i:i + chunk_size]
+        output_path = os.path.join(directory_output, f"{wallet_id}_{suffix}_{file_index}.json")
+
+        with open(output_path, "w") as f_out:
+            json.dump(chunk, f_out, indent=4)
+
+        print(f"Saved {len(chunk)} items to {output_path}")
+        file_index += 1
+
+    print(f"Splitting complete for {wallet_id} ({suffix})")
+    
+#_______________________________________________________________________________________________________________________
+
+def split_all_wallet_files(wallet_ids, dir_processed_addresses, dir_processed_transactions, dir_raw_addresses, dir_raw_transactions):
+    """
+    Split all merged JSON files for a list of wallet IDs into chunks of 100,000 objects,
+    for both addresses and transactions.
+
+    Args:
+        wallet_ids (list): List of wallet IDs to process.
+        dir_processed_addresses (str): Directory with merged addresses JSON files.
+        dir_processed_transactions (str): Directory with merged transactions JSON files.
+        dir_raw_addresses (str): Output directory for split addresses JSON files.
+        dir_raw_transactions (str): Output directory for split transactions JSON files.
+
+    Returns:
+        None
+    """
+    for wallet_id in wallet_ids:
+        print(f"\nSplitting addresses for {wallet_id}...")
+        split_json_file(
+            wallet_id=wallet_id,
+            directory_input=dir_processed_addresses,
+            directory_output=dir_raw_addresses,
+            data_field="addresses",
+            chunk_size=100000,
+            suffix="addresses"
+        )
+
+        print(f"Splitting transactions for {wallet_id}...")
+        split_json_file(
+            wallet_id=wallet_id,
+            directory_input=dir_processed_transactions,
+            directory_output=dir_raw_transactions,
+            data_field="transactions",
+            chunk_size=100000,
+            suffix="transactions"
+        )
+
+    print("\n✅ All files split successfully.")
+    
+#_______________________________________________________________________________________________________________________
