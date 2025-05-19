@@ -3,6 +3,33 @@ import pandas as pd
 
 #_______________________________________________________________________________________________________________________
 
+def process_wallet_dataframe(wallets_info_path, directory_addresses, known_services, w1, w2, w3, w4, w5):
+    """
+    Build dataframe, normalize columns and calculate scores.
+    
+    Args:
+        wallets_info_path (str): Path to the wallets info JSON file.
+        directory_addresses (str): Directory containing wallet address files.
+        known_services (list): List of known gambling services.
+        w1, w2, w3, w4, w5 (float): Weights for the scoring system.
+
+    Returns:
+        pd.DataFrame: Dataframe with wallet statistics and scores.
+    """
+    df = build_wallets_dataframe(
+        wallets_info_path=wallets_info_path,
+        directory_addresses=directory_addresses,
+        known_services=known_services
+    )
+
+    columns_to_normalize = ["total_transactions", "total_addresses", "transactions_per_address", "first_100_transactions"]
+    df = normalize_columns(df, columns_to_normalize)
+    df = calculate_scores(df, w1, w2, w3, w4, w5)
+
+    return df
+
+#_______________________________________________________________________________________________________________________
+
 def build_wallets_dataframe(wallets_info_path, directory_addresses, known_services):
     """
     Build the initial dataframe with wallet statistics.

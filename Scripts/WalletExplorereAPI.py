@@ -88,7 +88,7 @@ def get_transaction_count(wallet_id):
 
 #_______________________________________________________________________________________________________________________
 
-def get_wallet_info(wallet_id, directory="Data/processed/addresses", output_file="Data/processed/info/wallets_info.json"):
+def get_wallet_info(wallet_id, directory="Data/processed/first_100_addresses", output_file="Data/processed/info/wallets_info.json"):
     """
     Function to get wallet information including the number of addresses and transactions.
 

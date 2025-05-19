@@ -11,6 +11,7 @@ if __name__ == "__main__":
     directory_processed_100_addresses = "Data/processed/first_100_addresses"
     directory_processed_addr = "Data/processed/addresses"
     directory_processed_txs = "Data/processed/transactions"
+    directory_processed_info = "Data/processed/info"
 
     if not os.path.exists(directory_processed_100_addresses) or len(os.listdir(directory_processed_100_addresses)) == 0:
         download_first_100_addresses(
@@ -20,6 +21,13 @@ if __name__ == "__main__":
         )
     else:
         print("First 100 addresses are already downloaded.")
+        
+    if not os.path.exists(directory_processed_info) or len(os.listdir(directory_processed_info)) == 0:
+        get_wallet_info(
+            directory=directory_processed_100_addresses,
+            output_file=os.path.join(directory_processed_info, "wallets_info.json"),
+        )
+    print("Wallet info processed.")
 
 #______________________________________________________________________________________________________________________
     
@@ -60,8 +68,6 @@ if __name__ == "__main__":
 
     download_wallet_transactions(wallet_ids, directory_raw_transactions)
     print("All transactions for selected wallets downloaded.")
-    print("All data processing complete.")
-#______________________________________________________________________________________________________________________
 
     existing_merged_addresses = set(os.listdir(directory_processed_addr)) if os.path.exists(directory_processed_addr) else set()
     existing_merged_transactions = set(os.listdir(directory_processed_txs)) if os.path.exists(directory_processed_txs) else set()
@@ -91,6 +97,7 @@ if __name__ == "__main__":
             )
 
     print("All JSON files merged.")
+    print("All data processing complete.")
     
 #_______________________________________________________________________________________________________________________
 
