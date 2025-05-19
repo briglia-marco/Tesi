@@ -95,6 +95,8 @@ if __name__ == "__main__":
                 data_field="transactions",
                 count_field="transactions_count"
             )
+            
+    df_wallets = calculate_wallet_activity(df_wallets, directory_processed_txs)
 
     print("All JSON files merged.")
     print("All data processing complete.")

@@ -1,5 +1,8 @@
 import json
 import pandas as pd
+import os
+from datetime import datetime, timezone
+
 
 #_______________________________________________________________________________________________________________________
 
@@ -72,6 +75,61 @@ def build_wallets_dataframe(wallets_info_path, directory_addresses, known_servic
 
     return df
 
+#_______________________________________________________________________________________________________________________
+
+def get_wallet_activity_period(wallet_id, directory_transactions):
+    """
+    Return the first and last transaction date for a given wallet's transactions.
+
+    Args:
+        wallet_id (str): Wallet ID.
+        directory_transactions (str): Directory containing transaction JSON files.
+
+    Returns:
+        tuple: (first_date, last_date) as datetime.date objects, or (None, None) if no transactions found.
+    """
+    timestamps = []
+
+    for file_name in os.listdir(directory_transactions):
+        if file_name.startswith(wallet_id) and file_name.endswith(".json"):
+            with open(os.path.join(directory_transactions, file_name), "r") as f:
+                data = json.load(f)
+                if isinstance(data, dict) and "transactions" in data:
+                    timestamps.extend(tx["time"] for tx in data["transactions"] if "time" in tx)
+
+    if not timestamps:
+        return (None, None)
+
+    first_date = datetime.fromtimestamp(min(timestamps), tz=timezone.utc).date()
+    last_date = datetime.fromtimestamp(max(timestamps), tz=timezone.utc).date()
+
+    return first_date, last_date
+
+#_______________________________________________________________________________________________________________________
+
+def calculate_wallet_activity(df_wallets, directory_transactions):
+    """
+    Add first and last transaction date columns to an existing wallets dataframe.
+
+    Args:
+        df_wallets (pd.DataFrame): DataFrame with wallet IDs.
+        directory_transactions (str): Directory containing transaction JSON files.
+
+    Returns:
+        pd.DataFrame: DataFrame updated with first_tx_date and last_tx_date columns.
+    """
+    first_dates = []
+    last_dates = []
+
+    for wallet_id in df_wallets["wallet_id"]:
+        first_date, last_date = get_wallet_activity_period(wallet_id, directory_transactions)
+        first_dates.append(first_date)
+        last_dates.append(last_date)
+
+    df_wallets["first_tx_date"] = first_dates
+    df_wallets["last_tx_date"] = last_dates
+
+    return df_wallets
 #_______________________________________________________________________________________________________________________
 
 def normalize_columns(df, columns):
