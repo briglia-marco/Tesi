@@ -96,16 +96,24 @@ if __name__ == "__main__":
                 count_field="transactions_count"
             )
             
-    df_wallets = calculate_wallet_activity(df_wallets, directory_processed_txs)
+    #df_wallets = calculate_wallet_activity(df_wallets, directory_processed_txs)
 
     print("All JSON files merged.")
     print("All data processing complete.")
     
     #print(df_wallets[["wallet_id", "first_tx_date", "last_tx_date", "peak_activity_year", "activity_span_years"]])
-    #df_wallets.to_excel("Data/processed/wallets_info.xlsx", date_format="yyyy-mm-dd", index=False)
+    #df_wallets.to_excel("Data/processed/wallets_info.xlsx", index=False)
 
 #_______________________________________________________________________________________________________________________
 
+# TEMPORANEO SOLO PER SCARICARE I DATI DI STOSHIDICE.COM-ORIGINAL
 
+    wallet_id = "SatoshiDice.com-original"
+    #fetch_all_addresses(wallet_id, directory_raw_addresses)
+    #print("All addresses for selected wallets downloaded.")
+    
+    fetch_wallet_transactions(wallet_id, directory_raw_transactions)
+    print("All transactions for selected wallets downloaded.")
+    
 
 
