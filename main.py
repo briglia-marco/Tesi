@@ -13,7 +13,7 @@ if __name__ == "__main__":
     directory_processed_txs = "Data/processed/transactions"
     directory_processed_info = "Data/processed/info"
 
-    if not os.path.exists(directory_processed_100_addresses) or len(os.listdir(directory_processed_100_addresses)) == 0:
+    if len(os.listdir(directory_processed_100_addresses)) == 0:
         download_first_100_addresses(
             directory_addresses=directory_processed_100_addresses,
             get_wallet_ids=get_wallet_ids,
@@ -21,9 +21,9 @@ if __name__ == "__main__":
         )
     else:
         print("First 100 addresses are already downloaded.")
-        
-    if not os.path.exists(directory_processed_info) or len(os.listdir(directory_processed_info)) == 0:
-        get_wallet_info(
+
+    if len(os.listdir(directory_processed_info)) == 0:
+        get_all_wallets_info(
             directory=directory_processed_100_addresses,
             output_file=os.path.join(directory_processed_info, "wallets_info.json"),
         )
@@ -96,24 +96,13 @@ if __name__ == "__main__":
                 count_field="transactions_count"
             )
             
+    #df_wallets = df_wallets[1:15]
     #df_wallets = calculate_wallet_activity(df_wallets, directory_processed_txs)
 
     print("All JSON files merged.")
     print("All data processing complete.")
     
-    #print(df_wallets[["wallet_id", "first_tx_date", "last_tx_date", "peak_activity_year", "activity_span_years"]])
-    #df_wallets.to_excel("Data/processed/wallets_info.xlsx", index=False)
-
 #_______________________________________________________________________________________________________________________
 
-# TEMPORANEO SOLO PER SCARICARE I DATI DI STOSHIDICE.COM-ORIGINAL
-
-    wallet_id = "SatoshiDice.com-original"
-    #fetch_all_addresses(wallet_id, directory_raw_addresses)
-    #print("All addresses for selected wallets downloaded.")
-    
-    fetch_wallet_transactions(wallet_id, directory_raw_transactions)
-    print("All transactions for selected wallets downloaded.")
-    
 
 

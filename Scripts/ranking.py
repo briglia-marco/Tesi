@@ -92,7 +92,8 @@ def get_wallet_activity_stats(wallet_id, directory_transactions, coverage_thresh
     timestamps = []
 
     for file_name in os.listdir(directory_transactions):
-        if file_name.startswith(wallet_id) and file_name.endswith(".json"):
+        if file_name == f"{wallet_id}_transactions.json" or file_name.startswith(f"{wallet_id}_transactions_"):
+            print(file_name)
             with open(os.path.join(directory_transactions, file_name), "r") as f:
                 data = json.load(f)
                 if isinstance(data, dict) and "transactions" in data:

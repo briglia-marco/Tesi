@@ -88,40 +88,48 @@ def get_transaction_count(wallet_id):
 
 #_______________________________________________________________________________________________________________________
 
-def get_wallet_info(wallet_id, directory="Data/processed/first_100_addresses", output_file="Data/processed/info/wallets_info.json"):
+def get_all_wallets_info(directory="Data/processed/first_100_addresses", output_file="Data/processed/info/wallets_info.json"):
     """
-    Function to get wallet information including the number of addresses and transactions.
+    Function to get wallet information for all wallets found in the specified directory.
 
     Args:
-        wallet_id (str): The ID of the wallet.
         directory (str): The directory where the address files are stored.
-        output_file (str): The path to the output file where the wallet information will be saved.
+        output_file (str): The path to the output file where the wallets information will be saved.
 
     Returns:
-        dict: A dictionary containing the wallet information.
+        list: A list of dictionaries containing wallet information.
     """
 
-    with open(f"{directory}/{wallet_id}_addresses.json", "r") as f:
-        addresses = json.load(f)
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
 
-    total_transactions = get_transaction_count(wallet_id)
-    wallet_info = {
-        "wallet_id": wallet_id,
-        "total_addresses": addresses.get("addresses_count", 0),
-        "total_transactions": total_transactions
-    }
+    data = []
 
-    if os.path.exists(output_file):
-        with open(output_file, "r") as f:
-            data = json.load(f)
-    else:
-        data = []
+    for file_name in os.listdir(directory):
+        if file_name.endswith("_addresses.json"):
+            wallet_id = file_name.replace("_addresses.json", "")
 
-    data.append(wallet_info)
-    
+            with open(os.path.join(directory, file_name), "r") as f:
+                addresses = json.load(f)
+                if not addresses.get("found", False):
+                    print(f"Error: Wallet {wallet_id} not found.")
+                    continue
+
+            total_transactions = get_transaction_count(wallet_id)
+
+            wallet_info = {
+                "wallet_id": wallet_id,
+                "total_addresses": addresses.get("addresses_count", 0),
+                "total_transactions": total_transactions
+            }
+
+            data.append(wallet_info)
+            print(f"Added info for {wallet_id}")
+
     with open(output_file, "w") as f:
         json.dump(data, f, indent=4)
 
-    return wallet_info
+    print(f"Saved wallet info to {output_file}")
+
+    return data
 
 #_______________________________________________________________________________________________________________________
