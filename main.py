@@ -2,6 +2,7 @@ from Scripts.WalletExplorereAPI import *
 from Scripts.fetch import *
 from Scripts.ranking import *
 from Scripts.data_processing import *
+from Scripts.data_chunking import *
 import os
 
 if __name__ == "__main__":
@@ -104,5 +105,24 @@ if __name__ == "__main__":
     
 #_______________________________________________________________________________________________________________________
 
+# NEXT STEPS:
+# 1. Divide Sotoshidice-orignal's transactions in chunks
+#   1.1 Chunks of: 3 months, 6 months, 1 year, 2 years. find the limit.
 
+# 2. Build the transaction graph for the top address in the chunk and see who's the most connected to the top address.
+# 3. See wich wallet could have bot addresses
+
+    intervals = [3, 6, 12, 24]  # mesi
+    existing_chunk_files = set(os.listdir("Data/chunks/SatoshiDice.com-original")) if os.path.exists("Data/chunks/SatoshiDice.com-original") else set()
+    
+    for interval in intervals:
+        if not f"{interval}_months" in existing_chunk_files and len(os.listdir(f"Data/chunks/SatoshiDice.com-original/{interval}_months")) > 0:
+            split_transactions_into_chunks(
+                wallet_id="SatoshiDice.com-original",
+                input_dir="Data/raw/transactions",
+                output_base_dir="Data/chunks",
+                intervals_months=[interval]
+            )
+            
+    
 
