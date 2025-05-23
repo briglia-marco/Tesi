@@ -70,8 +70,12 @@ def process_transaction_file(file_name, input_dir, start_time, intervals_months,
 
         for interval in intervals_months:
             period_index = months_since_start // interval
+            period_start = start_time + pd.DateOffset(months=period_index * interval)
+            period_end = period_start + pd.DateOffset(months=interval) - pd.Timedelta(seconds=1)
+            period_label = f"{period_start.strftime('%Y-%m-%d')}_to_{period_end.strftime('%Y-%m-%d')}"
+
             out_dir = os.path.join(output_base_dir, f"{wallet_id}/{interval}_months")
-            out_file = os.path.join(out_dir, f"{period_index}.json")
+            out_file = os.path.join(out_dir, f"{period_label}.json")
 
             if out_file not in chunk_data[interval]:
                 chunk_data[interval][out_file] = []
@@ -134,3 +138,31 @@ def split_transactions_into_chunks(wallet_id, input_dir, output_base_dir, interv
     print("Chunking complete.")
 
 #_______________________________________________________________________________________________________________________
+
+
+def count_transactions_in_chunks(wallet_id, directory_input):
+    """
+    Count the number of transactions in each chunk for a given wallet ID.
+
+    Args:
+        wallet_id (str): Wallet ID to process.
+        directory_input (str): Directory containing the chunked JSON files.
+        
+    Returns:
+        pd.DataFrame: DataFrame containing the count of transactions in each chunk.
+    """
+    files = [f for f in os.listdir(directory_input) if f.endswith(".json")]
+
+    chunk_counts = []
+    for file_name in files:
+        with open(os.path.join(directory_input, file_name), "r") as f:
+            data = json.load(f)
+            transactions = data if isinstance(data, list) else data.get("transactions", [])
+            chunk_counts.append({
+                "chunk": file_name,
+                "count": len(transactions)
+            })
+    df_chunk_counts = pd.DataFrame(chunk_counts)
+    df_chunk_counts["chunk"] = df_chunk_counts["chunk"].str.replace(".json", "")
+
+    return df_chunk_counts

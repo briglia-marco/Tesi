@@ -101,7 +101,6 @@ if __name__ == "__main__":
     #df_wallets = calculate_wallet_activity(df_wallets, directory_processed_txs)
 
     print("All JSON files merged.")
-    print("All data processing complete.")
     
 #_______________________________________________________________________________________________________________________
 
@@ -110,19 +109,33 @@ if __name__ == "__main__":
 #   1.1 Chunks of: 3 months, 6 months, 1 year, 2 years. find the limit.
 
 # 2. Build the transaction graph for the top address in the chunk and see who's the most connected to the top address.
-# 3. See wich wallet could have bot addresses
+# 3. See which wallet could have bot addresses
 
-    intervals = [3, 6, 12, 24]  # mesi
+    intervals = [3, 6, 12, 24]  # months
     existing_chunk_files = set(os.listdir("Data/chunks/SatoshiDice.com-original")) if os.path.exists("Data/chunks/SatoshiDice.com-original") else set()
-    
+
     for interval in intervals:
-        if not f"{interval}_months" in existing_chunk_files and len(os.listdir(f"Data/chunks/SatoshiDice.com-original/{interval}_months")) > 0:
+        if not f"{interval}_months" in existing_chunk_files:
             split_transactions_into_chunks(
                 wallet_id="SatoshiDice.com-original",
                 input_dir="Data/raw/transactions",
                 output_base_dir="Data/chunks",
                 intervals_months=[interval]
             )
-            
+          
+    # UNCOMMENT TO CREATE XLSX FILES FOR EACH CHUNK WITH THE COUNT OF TRANSACTIONS PER PERIOD
     
+    # df_chunks = {}
+    # for interval in intervals:
+    #     df_chunk = count_transactions_in_chunks(
+    #         wallet_id="SatoshiDice.com-original",
+    #         directory_input=f"Data/chunks/SatoshiDice.com-original/{interval}_months"
+    #     )
+    #     df_chunk = df_chunk.sort_values(by="count", ascending=False)
+    #     df_chunks[interval] = df_chunk
+
+    # # TODO create a folder for .xlsx files
+    # for interval, df_chunk in df_chunks.items():
+    #     df_chunk.to_excel(f"Data/chunks/SatoshiDice.com-original/{interval}_months.xlsx", index=False)
+
 
