@@ -3,6 +3,7 @@ from Scripts.fetch import *
 from Scripts.ranking import *
 from Scripts.data_processing import *
 from Scripts.data_chunking import *
+from Scripts.graph import *
 import os
 
 if __name__ == "__main__":
@@ -64,11 +65,11 @@ if __name__ == "__main__":
 
     wallet_ids = df_wallets["wallet_id"].iloc[:15].tolist()
 
-    download_wallet_addresses(wallet_ids, directory_raw_addresses)
-    print("All addresses for selected wallets downloaded.")
+    # download_wallet_addresses(wallet_ids, directory_raw_addresses)
+    # print("All addresses for selected wallets downloaded.")
 
-    download_wallet_transactions(wallet_ids, directory_raw_transactions)
-    print("All transactions for selected wallets downloaded.")
+    # download_wallet_transactions(wallet_ids, directory_raw_transactions)
+    # print("All transactions for selected wallets downloaded.")
 
     existing_merged_addresses = set(os.listdir(directory_processed_addr)) if os.path.exists(directory_processed_addr) else set()
     existing_merged_transactions = set(os.listdir(directory_processed_txs)) if os.path.exists(directory_processed_txs) else set()
@@ -105,9 +106,6 @@ if __name__ == "__main__":
 #_______________________________________________________________________________________________________________________
 
 # NEXT STEPS:
-# 1. Divide Sotoshidice-orignal's transactions in chunks
-#   1.1 Chunks of: 3 months, 6 months, 1 year, 2 years. find the limit.
-
 # 2. Build the transaction graph for the top address in the chunk and see who's the most connected to the top address.
 # 3. See which wallet could have bot addresses
 
@@ -134,8 +132,25 @@ if __name__ == "__main__":
     #     df_chunk = df_chunk.sort_values(by="count", ascending=False)
     #     df_chunks[interval] = df_chunk
 
-    # # TODO create a folder for .xlsx files
     # for interval, df_chunk in df_chunks.items():
-    #     df_chunk.to_excel(f"Data/chunks/SatoshiDice.com-original/{interval}_months.xlsx", index=False)
+    #     df_chunk.to_excel(f"Data/chunks/SatoshiDice.com-original/xlsx/{interval}_months.xlsx", index=False)
+
+# _______________________________________________________________________________________________________________________
+
+# GRAPH ANALYSIS
+
+# First graph: wallet graph {nodes: wallets, edges: transactions between wallets, labels: amount, timestamp, sent/received}
+# Second graph: txs graph of the customer wallet {nodes: transactions, edges: connection with timestamp, amount}
+#   find the transactions with given wallet_id and create a graph of those transactions
+
+# plot degree wallet, average amount, time variance, total_sent - total_received (net balance)
+
+    build_wallet_graph_for_chunk(
+        base_directory="Data/chunks/SatoshiDice.com-original/3_months",
+        service_node="SatoshiDice.com-original",
+        chunk_to_process="2015-10-18_to_2016-01-18.json", # Example chunk file name, adjust as needed
+        output_dir="Data/graphs"
+    )
 
 
+    

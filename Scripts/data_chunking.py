@@ -166,3 +166,5 @@ def count_transactions_in_chunks(wallet_id, directory_input):
     df_chunk_counts["chunk"] = df_chunk_counts["chunk"].str.replace(".json", "")
 
     return df_chunk_counts
+
+#_______________________________________________________________________________________________________________________
