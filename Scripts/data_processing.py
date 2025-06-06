@@ -53,6 +53,7 @@ def merge_wallet_json_files(wallet_id, directory_input, directory_output, output
     Merge all JSON files for a given wallet ID containing either addresses or transactions
     into a single JSON file. The data_field and count_field are customizable.
     Supports both dict-based and pure list JSON files.
+    
     Args:
         wallet_id (str): The wallet ID to merge files for.
         directory_input (str): Directory containing the input JSON files.
@@ -60,6 +61,7 @@ def merge_wallet_json_files(wallet_id, directory_input, directory_output, output
         output_suffix (str): Suffix for the output file name.
         data_field (str): The field in the JSON to merge (e.g., "addresses" or "transactions").
         count_field (str): The field to count items in the JSON.
+        
     Returns:
         None
     """

@@ -140,17 +140,30 @@ if __name__ == "__main__":
 # GRAPH ANALYSIS
 
 # First graph: wallet graph {nodes: wallets, edges: transactions between wallets, labels: amount, timestamp, sent/received}
+
 # Second graph: txs graph of the customer wallet {nodes: transactions, edges: connection with timestamp, amount}
 #   find the transactions with given wallet_id and create a graph of those transactions
 
 # plot degree wallet, average amount, time variance, total_sent - total_received (net balance)
 
-    build_wallet_graph_for_chunk(
-        base_directory="Data/chunks/SatoshiDice.com-original/3_months",
-        service_node="SatoshiDice.com-original",
-        chunk_to_process="2015-10-18_to_2016-01-18.json", # Example chunk file name, adjust as needed
-        output_dir="Data/graphs"
-    )
+    chunk_to_process = "2015-10-18_to_2016-01-18.json"  # Example chunk file name, adjust as needed
 
-
+    if not os.path.exists(f"Data/graphs/{chunk_to_process}.csv"):
+        build_wallet_graph_for_chunk(
+            base_directory="Data/chunks/SatoshiDice.com-original/3_months",
+            service_node="SatoshiDice.com-original",
+            chunk_to_process=chunk_to_process,
+            output_dir="Data/graphs"
+        )
     
+    
+    wallet_id = "4f8ecfd4c7e026b0"  # Example wallet ID, adjust as needed
+    
+    if not os.path.exists(f"Data/graphs/{wallet_id}_txs_graph.csv"):
+        build_txs_graph_for_chunk(
+            base_directory="Data/chunks/SatoshiDice.com-original/3_months",
+            wallet_id=wallet_id,
+            chunk_to_process=chunk_to_process,
+            output_dir="Data/graphs"
+        )
+

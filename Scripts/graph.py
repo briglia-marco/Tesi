@@ -50,16 +50,18 @@ def build_wallet_graph_for_chunk(base_directory, service_node, chunk_to_process,
             G.add_node(sender, type='wallet')
             G.add_edge(sender, receiver, amount=amount, timestamp=timestamp, txid=transaction_id, direction="received")
 
-    export_graph_for_neo4j(G, output_dir)
+    export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process)
     
 #_______________________________________________________________________________________________________________________
-def export_graph_for_neo4j(G, output_dir):
+
+def export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process):
     """
     Export the graph to a format suitable for Neo4j.
     
     Args:
         G (networkx.Graph): The graph to export.
         output_dir (str): Directory to save the exported graph data.
+        chunk_to_process (str): The specific chunk file being processed.
 
     Returns:
         None
@@ -81,21 +83,127 @@ def export_graph_for_neo4j(G, output_dir):
             "txid": data.get("txid", ""),
             "direction": data.get("direction", "")
         })
+        
+    #get the base name of the chunk file without extension
+    chunk_base_name = os.path.splitext(os.path.basename(chunk_to_process))[0]
     
     nodes_df = pd.DataFrame(nodes_data)
     edges_df = pd.DataFrame(edges_data)
-    nodes_file = os.path.join(output_dir, "nodes.csv")
-    edges_file = os.path.join(output_dir, "edges.csv")
+    nodes_file = os.path.join(output_dir, f"nodes_{chunk_base_name}.csv")
+    edges_file = os.path.join(output_dir, f"edges_{chunk_base_name}.csv")
     nodes_df.to_csv(nodes_file, index=False)
     edges_df.to_csv(edges_file, index=False)
     print(f"Graph exported to {output_dir} with {len(G.nodes)} nodes and {len(G.edges)} edges.")
             
+#_______________________________________________________________________________________________________________________
 
-        
-        
-            
-            
-        
-        
+def build_txs_graph_for_chunk(base_directory, wallet_id, chunk_to_process, output_dir="Data/graphs"):
+    """
+    Build a transaction graph for a specific chunk of transactions related to a given wallet ID.
     
+    Args:
+        base_directory (str): Base directory containing the chunked transaction data.
+        wallet_id (str): The wallet ID to analyze.
+        chunk_to_process (str): The specific chunk file to process.
+        output_dir (str): Directory to save the graph data.
 
+    Returns:
+        None
+    """
+    
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        
+    chunk_path = os.path.join(base_directory, chunk_to_process)
+    if not os.path.exists(chunk_path):
+        print(f"Chunk file {chunk_to_process} does not exist in {base_directory}.")
+        return
+    
+    G = nx.MultiDiGraph()
+    
+    with open(chunk_path, "r") as f:
+        transactions = json.load(f)
+        
+    list_of_transactions = []
+    for transaction in transactions:
+        if transaction["type"] == "sent" and transaction["outputs"][0]["wallet_id"] == wallet_id:
+            transaction  = {
+                "txid": transaction["txid"],
+                "time": transaction["time"],
+                "amount": transaction["outputs"][0]["amount"],
+                "type": "sent",
+                "wallet_id": wallet_id
+            }
+            list_of_transactions.append(transaction)
+            
+        elif transaction["type"] == "received" and transaction["wallet_id"] == wallet_id:
+            transaction  = {
+                "txid": transaction["txid"],
+                "time": transaction["time"],
+                "amount": transaction["amount"],
+                "type": "received",
+                "wallet_id": wallet_id
+            }
+            list_of_transactions.append(transaction)
+
+    if not list_of_transactions:
+        print(f"No transactions found for wallet {wallet_id} in chunk {chunk_to_process}.")
+        return
+    
+    list_of_transactions.sort(key=lambda x: x["time"])
+
+    G.add_node(list_of_transactions[0]["txid"], type='transaction', timestamp=list_of_transactions[0]["time"], amount=list_of_transactions[0]["amount"])
+
+    for transaction in list_of_transactions[1:]:
+        prev_txid = list_of_transactions[list_of_transactions.index(transaction) - 1]["txid"]
+        G.add_node(transaction["txid"], type='transaction', timestamp=transaction["time"], amount=transaction["amount"])
+        G.add_edge(prev_txid, transaction["txid"], timestamp=transaction["time"], amount=transaction["amount"], type=transaction["type"])
+
+    export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process)
+    
+#_______________________________________________________________________________________________________________________
+
+def export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process):
+    """
+    Export the transaction graph to a format suitable for Neo4j.
+    
+    Args:
+        G (networkx.Graph): The graph to export.
+        output_dir (str): Directory to save the exported graph data.
+        wallet_id (str): The wallet ID being processed.
+        chunk_to_process (str): The specific chunk file being processed.
+
+    Returns:
+        None
+    """
+    pass
+    nodes_data = []
+    edges_data = []
+    
+    for node, data in G.nodes(data=True):
+        nodes_data.append({
+            "id": node,
+            "type": data.get("type", "unknown"),
+        })
+
+    for source, target, data in G.edges(data=True):
+        edges_data.append({
+            "source": source,
+            "target": target,
+            "type": data.get("type", "unknown"),
+            "timestamp": data.get("timestamp", ""),
+            "amount": data.get("amount", 0)
+        })
+
+    chunk_base_name = os.path.splitext(os.path.basename(chunk_to_process))[0]
+
+    nodes_df = pd.DataFrame(nodes_data)
+    edges_df = pd.DataFrame(edges_data)
+    nodes_file = os.path.join(output_dir, f"{wallet_id}_nodes_{chunk_base_name}.csv")
+    edges_file = os.path.join(output_dir, f"{wallet_id}_edges_{chunk_base_name}.csv")
+    nodes_df.to_csv(nodes_file, index=False)
+    edges_df.to_csv(edges_file, index=False)
+    
+    print(f"Transaction graph for wallet {wallet_id} exported to {output_dir} with {len(G.nodes)} nodes and {len(G.edges)} edges.")
+        
+#_______________________________________________________________________________________________________________________
