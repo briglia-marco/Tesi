@@ -4,6 +4,7 @@ from Scripts.ranking import *
 from Scripts.data_processing import *
 from Scripts.data_chunking import *
 from Scripts.graph import *
+from Scripts.metrics import *
 import os
 
 if __name__ == "__main__":
@@ -139,16 +140,12 @@ if __name__ == "__main__":
 
 # GRAPH ANALYSIS
 
+    chunk_to_process = "2015-10-18_to_2016-01-18.json"  # Example chunk file name, adjust as needed
+    wallet_id = "01264a56d1f8fb9e"  # Example wallet ID, adjust as needed
+
 # First graph: wallet graph {nodes: wallets, edges: transactions between wallets, labels: amount, timestamp, sent/received}
 
-# Second graph: txs graph of the customer wallet {nodes: transactions, edges: connection with timestamp, amount}
-#   find the transactions with given wallet_id and create a graph of those transactions
-
-# plot degree wallet, average amount, time variance, total_sent - total_received (net balance)
-
-    chunk_to_process = "2015-10-18_to_2016-01-18.json"  # Example chunk file name, adjust as needed
-
-    if not os.path.exists(f"Data/graphs/{chunk_to_process}.csv"):
+    if not os.path.exists(f"Data/graphs/{chunk_to_process}.csv"): #TODO: change name in exists
         build_wallet_graph_for_chunk(
             base_directory="Data/chunks/SatoshiDice.com-original/3_months",
             service_node="SatoshiDice.com-original",
@@ -156,10 +153,10 @@ if __name__ == "__main__":
             output_dir="Data/graphs"
         )
     
-    
-    wallet_id = "4f8ecfd4c7e026b0"  # Example wallet ID, adjust as needed
-    
-    if not os.path.exists(f"Data/graphs/{wallet_id}_txs_graph.csv"):
+# Second graph: txs graph of the customer wallet {nodes: transactions, edges: connection with timestamp, amount}
+#   find the transactions with given wallet_id and create a graph of those transactions
+
+    if not os.path.exists(f"Data/graphs/{wallet_id}_txs_graph.csv"): #TODO: change name in exists
         build_txs_graph_for_chunk(
             base_directory="Data/chunks/SatoshiDice.com-original/3_months",
             wallet_id=wallet_id,
@@ -167,3 +164,24 @@ if __name__ == "__main__":
             output_dir="Data/graphs"
         )
 
+# plot degree wallet, average amount, time variance, total_sent - total_received (net balance)
+
+    wallet_in_period = build_chunk_metrics_dataframe(
+        directory_input="Data/chunks/SatoshiDice.com-original/3_months",
+        chunk_to_process=chunk_to_process
+    )
+    
+    wallet_in_period["average_amount"] = wallet_in_period["total_btc_received"] / wallet_in_period["in_degree"]
+    wallet_in_period["net_balance"] = wallet_in_period["total_btc_received"] - wallet_in_period["total_btc_sent"]
+
+    dataframe = pd.DataFrame()
+    for wallet_id in wallet_in_period["wallet_id"]:
+        calculate_time_variance(wallet_id, dataframe, directory_input="Data/chunks/SatoshiDice.com-original/3_months", chunk_to_process=chunk_to_process)
+
+    print(wallet_in_period)
+    print(dataframe)
+    
+#	Un bot avrà spesso mean_time_diff basso e time_variance bassa (azioni molto regolari)
+#   Un utente umano avrà tempi più irregolari e distribuiti (varianza e deviazione più alte)
+
+    
