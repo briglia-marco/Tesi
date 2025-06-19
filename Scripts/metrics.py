@@ -129,13 +129,12 @@ def update_dataframe_with_stats(dataframe, wallet_id, stats):
         
 #_______________________________________________________________________________________________________________________
 
-def calculate_time_variance(wallet_id, dataframe, directory_input, chunk_to_process):
+def calculate_time_variance(wallet_id, directory_input, chunk_to_process):
     """
     Calculate time variance statistics for a specific wallet in a given chunk.
     
     Args:
         wallet_id (str): The wallet ID to analyze.
-        dataframe (pd.DataFrame): The DataFrame to update with the statistics.
         directory_input (str): Directory containing the chunk files.
         chunk_to_process (str): The specific chunk file to process.
         
@@ -146,20 +145,20 @@ def calculate_time_variance(wallet_id, dataframe, directory_input, chunk_to_proc
     transactions = load_chunk_transactions(chunk_path)
     if not transactions:
         print(f"No transactions found in chunk {chunk_to_process}.")
-        return
+        return None
 
     wallet_txs = get_wallet_transactions(wallet_id, transactions)
     if not wallet_txs:
         print(f"No transactions found for wallet {wallet_id} in chunk {chunk_to_process}.")
-        return
+        return None
 
     time_diffs = compute_time_differences(wallet_txs)
     if not time_diffs:
         print(f"No time differences found for wallet {wallet_id}.")
-        return
+        return None
 
     stats = compute_time_statistics(time_diffs)
-    update_dataframe_with_stats(dataframe, wallet_id, stats)
+    return stats
 
 #_______________________________________________________________________________________________________________________
 
