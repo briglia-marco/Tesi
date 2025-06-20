@@ -168,3 +168,35 @@ def count_transactions_in_chunks(wallet_id, directory_input):
     return df_chunk_counts
 
 #_______________________________________________________________________________________________________________________
+
+def generate_chunk_transaction_reports(wallet_id, base_chunk_dir, intervals, output_dir):
+    """
+    Conta il numero di transazioni in ogni file di ogni periodo (chunk)
+    e salva i risultati in file Excel per ciascun intervallo di mesi.
+
+    Args:
+        wallet_id (str): Il wallet di riferimento.
+        base_chunk_dir (str): Directory base dove si trovano i chunk.
+        intervals (list): Lista di intervalli temporali (in mesi).
+        output_dir (str): Directory dove salvare i file Excel risultanti.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    df_chunks = {}
+
+    for interval in intervals:
+        print(f"[INFO] Counting transactions for {interval} months chunks...")
+        df_chunk = count_transactions_in_chunks(
+            wallet_id=wallet_id,
+            directory_input=os.path.join(base_chunk_dir, f"{interval}_months")
+        )
+        df_chunk = df_chunk.sort_values(by="count", ascending=False)
+        df_chunks[interval] = df_chunk
+
+    for interval, df_chunk in df_chunks.items():
+        output_path = os.path.join(output_dir, f"{interval}_months.xlsx")
+        df_chunk.to_excel(output_path, index=False)
+        print(f"[INFO] Saved Excel report: {output_path}")
+
+    print("[INFO] All reports generated.")
+    
+#_______________________________________________________________________________________________________________________

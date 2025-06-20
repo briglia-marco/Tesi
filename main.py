@@ -119,20 +119,12 @@ if __name__ == "__main__":
                 intervals_months=[interval]
             )
           
-    # UNCOMMENT TO CREATE XLSX FILES FOR EACH CHUNK WITH THE COUNT OF TRANSACTIONS PER PERIOD
-    
-    # df_chunks = {}
-    # for interval in intervals:
-    #     df_chunk = count_transactions_in_chunks(
-    #         wallet_id="SatoshiDice.com-original",
-    #         directory_input=f"Data/chunks/SatoshiDice.com-original/{interval}_months"
-    #     )
-    #     df_chunk = df_chunk.sort_values(by="count", ascending=False)
-    #     df_chunks[interval] = df_chunk
-
-    # for interval, df_chunk in df_chunks.items():
-    #     df_chunk.to_excel(f"Data/chunks/SatoshiDice.com-original/xlsx/{interval}_months.xlsx", index=False)
-
+    # generate_chunk_transaction_reports(
+    #     wallet_id="SatoshiDice.com-original",
+    #     base_chunk_dir="Data/chunks/SatoshiDice.com-original",
+    #     intervals=intervals,
+    #     output_dir="Data/chunks/SatoshiDice.com-original/xlsx"
+    # )
 # _______________________________________________________________________________________________________________________
 
 # GRAPH
@@ -187,6 +179,7 @@ if __name__ == "__main__":
         os.makedirs(output_dir)
     wallet_in_period_df.to_excel(os.path.join(output_dir, f"{chunk_to_process}_metrics.xlsx"), index=False)
     
+    plot_metrics(wallet_in_period_df)
     
     # BOT METRICS
 
@@ -202,13 +195,6 @@ if __name__ == "__main__":
     # mean time diff -> alta
     # std dev time diff -> tende a essere alta
     # min time diff -> tende a essere alta
-
-    #funzioni per plottare i dati
-    
-    plot_metrics(wallet_in_period_df)
-
-
-
 
 #________________________________________________________________________________________________________________________
 
