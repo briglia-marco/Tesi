@@ -119,6 +119,8 @@ if __name__ == "__main__":
                 intervals_months=[interval]
             )
           
+    # UNCOMMENT TO GENERATE CHUNKS REPORTS IN XLSX FORMAT
+    
     # generate_chunk_transaction_reports(
     #     wallet_id="SatoshiDice.com-original",
     #     base_chunk_dir="Data/chunks/SatoshiDice.com-original",
@@ -129,39 +131,57 @@ if __name__ == "__main__":
 
 # GRAPH
 
-    chunk_to_process = "2015-10-18_to_2016-01-18.json"  # Example chunk file name, adjust as needed
-    wallet_id = "01264a56d1f8fb9e"  # Example wallet ID, adjust as needed
+    directory_chunks = "Data/chunks/SatoshiDice.com-original/3_months"
+    chunks_to_process = pd.read_excel("Data/chunks/SatoshiDice.com-original/xlsx/3_months.xlsx")
+    chunks_to_process = chunks_to_process[chunks_to_process["count"] > 100000]
+    
+    
+    for chunk_to_process in chunks_to_process["chunk"].tolist():
+    # aggiungere .json in chunk_to_process prima di fare le analisi.
+    chunk_to_process = "2013-07-18_to_2013-10-18.json"  # Example chunk file name, adjust as needed
+    #wallet_id = "01264a56d1f8fb9e"  # Example wallet ID, adjust as needed
 
-    if not os.path.exists(f"Data/chunks/SatoshiDice.com-original/3_months/{chunk_to_process}"):
+    if os.path.exists(f"{directory_chunks}/{chunk_to_process}"):
         build_wallet_graph_for_chunk(
-            base_directory="Data/chunks/SatoshiDice.com-original/3_months",
+            base_directory=directory_chunks,
             service_node="SatoshiDice.com-original",
             chunk_to_process=chunk_to_process,
             output_dir="Data/graphs"
         )
-    
+        
         build_txs_graph_for_chunk(
-            base_directory="Data/chunks/SatoshiDice.com-original/3_months",
+            base_directory=directory_chunks,
             wallet_id=wallet_id,
             chunk_to_process=chunk_to_process,
             output_dir="Data/graphs"
-        )   
-        
+        )
+
+
+
 # ANALYSIS OF THE CHUNK
 
     wallet_in_period_df = build_chunk_metrics_dataframe(
-        directory_input="Data/chunks/SatoshiDice.com-original/3_months",
+        directory_input=directory_chunks,
         chunk_to_process=chunk_to_process
     )
     
     #print(wallet_in_period_df.to_string(index=False))
-    
+    wallet_in_period_df = wallet_in_period_df[wallet_in_period_df["in_degree"] > 10]
     wallet_in_period_df["average_amount"] = wallet_in_period_df["total_btc_received"] / wallet_in_period_df["in_degree"]
     wallet_in_period_df["net_balance"] = wallet_in_period_df["total_btc_received"] - wallet_in_period_df["total_btc_sent"]
 
-    directory_chunks = "Data/chunks/SatoshiDice.com-original/3_months"
+
+
+
+
+    chunk_path = os.path.join(directory_chunks, chunk_to_process)
+    transactions = load_chunk_transactions(chunk_path)
+    if not transactions:
+        print(f"No transactions found in chunk {chunk_to_process}.")
+        exit(1)
+    
     for wallet_id in wallet_in_period_df["wallet_id"]:
-        time_metrics = calculate_time_variance(wallet_id, directory_chunks, chunk_to_process)
+        time_metrics = calculate_time_variance(wallet_id, transactions)
         if time_metrics:
             for key, value in time_metrics.items():
                 wallet_in_period_df.loc[wallet_in_period_df["wallet_id"] == wallet_id, key] = value
@@ -179,7 +199,7 @@ if __name__ == "__main__":
         os.makedirs(output_dir)
     wallet_in_period_df.to_excel(os.path.join(output_dir, f"{chunk_to_process}_metrics.xlsx"), index=False)
     
-    plot_metrics(wallet_in_period_df)
+    #plot_metrics(wallet_in_period_df)
     
     # BOT METRICS
 
@@ -197,4 +217,10 @@ if __name__ == "__main__":
     # min time diff -> tende a essere alta
 
 #________________________________________________________________________________________________________________________
+
+#TODO analizzare period più popolati 
+#TODO segnarsi txs con timestamp uguale sullo stesso blocco
+
+
+
 

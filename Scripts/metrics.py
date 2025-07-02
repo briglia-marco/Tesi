@@ -33,10 +33,10 @@ def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
                 stats["in_degree"] += 1
                 stats["total_btc_received"] += amount
                 wallet_stats[wallet_id] = stats
-
             elif transaction["type"] == "sent":
-                wallet_id = transaction["outputs"][0]["wallet_id"]
-                amount = transaction["outputs"][0]["amount"]
+                if transaction["outputs"]:
+                    wallet_id = transaction["outputs"][0]["wallet_id"]
+                    amount = transaction["outputs"][0]["amount"]
                 stats = wallet_stats.get(wallet_id, {"in_degree": 0, "out_degree": 0, "total_btc_received": 0, "total_btc_sent": 0})
                 stats["out_degree"] += 1
                 stats["total_btc_sent"] += amount
@@ -72,8 +72,9 @@ def get_wallet_transactions(wallet_id, transactions):
     for tx in transactions:
         if tx["type"] == "received" and tx["wallet_id"] == wallet_id:
             wallet_txs.append({"time": tx["time"], "amount": tx["amount"], "type": "received"})
-        elif tx["type"] == "sent" and tx["outputs"][0]["wallet_id"] == wallet_id:
-            wallet_txs.append({"time": tx["time"], "amount": tx["outputs"][0]["amount"], "type": "sent"})
+        elif tx["type"] == "sent" and tx["outputs"]:
+            if tx["outputs"][0]["wallet_id"] == wallet_id:
+                wallet_txs.append({"time": tx["time"], "amount": tx["outputs"][0]["amount"], "type": "sent"})
     return wallet_txs
 
 #_______________________________________________________________________________________________________________________
@@ -129,7 +130,7 @@ def update_dataframe_with_stats(dataframe, wallet_id, stats):
         
 #_______________________________________________________________________________________________________________________
 
-def calculate_time_variance(wallet_id, directory_input, chunk_to_process):
+def calculate_time_variance(wallet_id, transactions):
     """
     Calculate time variance statistics for a specific wallet in a given chunk.
     
@@ -141,22 +142,17 @@ def calculate_time_variance(wallet_id, directory_input, chunk_to_process):
     Returns:
         None
     """
-    chunk_path = os.path.join(directory_input, chunk_to_process)
-    transactions = load_chunk_transactions(chunk_path)
-    if not transactions:
-        print(f"No transactions found in chunk {chunk_to_process}.")
-        return None
-
     wallet_txs = get_wallet_transactions(wallet_id, transactions)
     if not wallet_txs:
-        print(f"No transactions found for wallet {wallet_id} in chunk {chunk_to_process}.")
+        print(f"No transactions found for wallet {wallet_id}.")
         return None
 
     time_diffs = compute_time_differences(wallet_txs)
     if not time_diffs:
         print(f"No time differences found for wallet {wallet_id}.")
-        return None
-
+        return None 
+    
+    print("Calculating time variance statistics for wallet:", wallet_id)
     stats = compute_time_statistics(time_diffs)
     return stats
 
