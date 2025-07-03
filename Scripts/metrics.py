@@ -5,6 +5,67 @@ import json
 
 #_______________________________________________________________________________________________________________________
 
+def analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir):
+    """
+    Analyze metrics for a specific chunk of transactions.
+    This function processes a chunk file, builds a DataFrame with wallet metrics,
+    calculates average amounts, net balances, and time variance statistics for each wallet.
+    It saves the results to an Excel file in the specified output directory.
+    
+    Args:
+        chunk_to_process (str): The specific chunk file to process.
+        directory_chunks (str): Directory containing the chunked transaction data.
+        output_dir (str): Directory to save the metrics results.
+        
+    Returns:
+        None
+    """
+    chunk_file = f"{chunk_to_process}.json"
+    metrics_file = os.path.join(output_dir, f"{chunk_file}_metrics.xlsx")
+
+    if os.path.exists(metrics_file):
+        print(f"Metrics file already exists for {chunk_to_process}, skipping.")
+        return
+
+    wallet_df = build_chunk_metrics_dataframe(
+        directory_input=directory_chunks,
+        chunk_to_process=chunk_file
+    )
+
+    if wallet_df.empty:
+        print(f"No data found for {chunk_to_process}. Skipping metrics.")
+        return
+
+    wallet_df = wallet_df[wallet_df["in_degree"] > 10]
+    wallet_df["average_amount"] = wallet_df["total_btc_received"] / wallet_df["in_degree"]
+    wallet_df["net_balance"] = wallet_df["total_btc_received"] - wallet_df["total_btc_sent"]
+
+    transactions = load_chunk_transactions(os.path.join(directory_chunks, chunk_file))
+    if not transactions:
+        print(f"No transactions found in {chunk_file}.")
+        return
+
+    for wallet_id in wallet_df["wallet_id"]:
+        time_metrics = calculate_time_variance(wallet_id, transactions)
+        if time_metrics:
+            for key, value in time_metrics.items():
+                wallet_df.loc[wallet_df["wallet_id"] == wallet_id, key] = value
+            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "time_variance"] = time_metrics["time_variance"]
+            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "mean_time_diff"] = time_metrics["mean_time_diff"]
+            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "std_dev_time_diff"] = time_metrics["std_dev_time_diff"]
+            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "min_time_diff"] = time_metrics["min_time_diff"]
+            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "max_time_diff"] = time_metrics["max_time_diff"]
+
+
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    wallet_df.to_excel(metrics_file, index=False)
+    print(f"Metrics saved for {chunk_to_process}.")
+
+
+#_______________________________________________________________________________________________________________________
+
 def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
     """
     Count wallet transactions in a specific time period.

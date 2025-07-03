@@ -6,6 +6,36 @@ import matplotlib.pyplot as plt
 
 #_______________________________________________________________________________________________________________________
 
+def build_graphs_for_wallet(chunk_to_process, directory_chunks):
+    """Build graphs for a specific wallet based on the provided chunks.
+
+    Args:
+        chunk_to_process (str): The specific chunk file to process.
+        directory_chunks (str): Directory containing the chunked transaction data.
+    """
+    chunk_path = f"{directory_chunks}/{chunk_to_process}.json"
+    edges_path = f"Data/graphs/edges_{chunk_to_process}.csv"
+    nodes_path = f"Data/graphs/nodes_{chunk_to_process}.csv"
+    
+    if os.path.exists(chunk_path) and not (os.path.exists(edges_path) or os.path.exists(nodes_path)):
+        chunk_to_process_file = f"{chunk_to_process}.json"
+        build_wallet_graph_for_chunk(
+            base_directory=directory_chunks,
+            service_node="SatoshiDice.com-original",
+            chunk_to_process=chunk_to_process_file,
+            output_dir="Data/graphs"
+        )
+            
+        # wallet_id = "01264a56d1f8fb9e"  # Example wallet ID, adjust as needed
+        # build_txs_graph_for_chunk(
+        #     base_directory=directory_chunks,
+        #     wallet_id=wallet_id,
+        #     chunk_to_process=chunk_to_process,
+        #     output_dir="Data/graphs"
+        # )
+        
+#_______________________________________________________________________________________________________________________
+
 def build_wallet_graph_for_chunk(base_directory, service_node, chunk_to_process, output_dir="Data/graphs"):
     """
     Build a wallet graph for a specific chunk of transactions.
@@ -19,7 +49,6 @@ def build_wallet_graph_for_chunk(base_directory, service_node, chunk_to_process,
     Returns:
         None
     """
-
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
         
@@ -38,8 +67,9 @@ def build_wallet_graph_for_chunk(base_directory, service_node, chunk_to_process,
         timestamp = transaction["time"]
         transaction_id = transaction["txid"]
         if transaction["type"] == "sent":
-            amount = transaction["outputs"][0]["amount"]
-            receiver = transaction["outputs"][0]["wallet_id"]
+            if transaction["outputs"]:
+                amount = transaction["outputs"][0]["amount"]
+                receiver = transaction["outputs"][0]["wallet_id"]
             sender = service_node
             G.add_node(receiver, type='wallet')
             G.add_edge(sender, receiver, amount=amount, timestamp=timestamp, txid=transaction_id, direction="sent")
@@ -50,6 +80,7 @@ def build_wallet_graph_for_chunk(base_directory, service_node, chunk_to_process,
             G.add_node(sender, type='wallet')
             G.add_edge(sender, receiver, amount=amount, timestamp=timestamp, txid=transaction_id, direction="received")
 
+    print("Exporting wallet graph for chunk:", chunk_to_process)
     export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process)
     
 #_______________________________________________________________________________________________________________________
