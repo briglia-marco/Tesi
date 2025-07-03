@@ -157,9 +157,53 @@ if __name__ == "__main__":
 
 #________________________________________________________________________________________________________________________
 
-#TODO analizzare period più popolati 
-#TODO segnarsi txs con timestamp uguale sullo stesso blocco
+    chunk_metrics_directory = "Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics"
+    chunk_metrics_files = os.listdir(chunk_metrics_directory)
+    chunk_global_metrics_df = pd.DataFrame()
+    for chunk_file in chunk_metrics_files:
+        chunk_file_name = chunk_file.split(".")[0]
+        chunk_global_metrics_df = calculate_chunk_global_metrics(
+            chunk_file_path=os.path.join(chunk_metrics_directory, chunk_file),
+            global_metrics_df=chunk_global_metrics_df,
+            chunk_file_name=chunk_file_name
+        )
 
+    chunk_global_metrics_df.to_excel(
+        "Data/chunks/SatoshiDice.com-original/xlsx/chunk_global_metrics.xlsx",
+        index=False
+    )
+    
+    plot_chunk_global_metrics(chunk_global_metrics_df)
+
+#________________________________________________________________________________________________________________________
+
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#TODO segnarsi txs con timestamp uguale sullo stesso blocco
 
 
 

@@ -219,3 +219,41 @@ def calculate_time_variance(wallet_id, transactions):
 
 #_______________________________________________________________________________________________________________________
 
+def calculate_chunk_global_metrics(chunk_file_path, global_metrics_df, chunk_file_name):
+    """
+    Calculate global metrics for a chunk and update the global metrics DataFrame.
+    
+    Args:
+        chunk_file_path (str): Path to the chunk file.
+        global_metrics_df (pd.DataFrame): DataFrame to store global metrics.
+        
+    Returns:
+        None
+    """
+    if not os.path.exists(chunk_file_path):
+        print(f"Chunk file {chunk_file_path} does not exist.")
+        return global_metrics_df
+    
+    chunk_df = pd.read_excel(chunk_file_path)
+    
+    total_txs = chunk_df['in_degree'].sum() + chunk_df['out_degree'].sum()
+    unique_wallets = chunk_df['wallet_id'].nunique()
+    total_btc_received = chunk_df['total_btc_received'].sum()
+    mean_net_balance = chunk_df['net_balance'].mean()
+    variance_net_balance = chunk_df['net_balance'].var()
+    mean_time_variance = chunk_df['time_variance'].mean()
+    variance_time_variance = chunk_df['time_variance'].var()
+    
+    new_row = pd.DataFrame([{
+        "chunk": chunk_file_name,
+        "total_transactions": total_txs,
+        "unique_wallets": unique_wallets,
+        "total_btc_received": total_btc_received,
+        "mean_net_balance": mean_net_balance,
+        "variance_net_balance": variance_net_balance,
+        "mean_time_variance": mean_time_variance,
+        "variance_time_variance": variance_time_variance
+    }])
+
+    global_metrics_df = pd.concat([global_metrics_df, new_row], ignore_index=True)
+    return global_metrics_df
