@@ -68,10 +68,7 @@ if __name__ == "__main__":
     wallet_ids = df_wallets["wallet_id"].iloc[:15].tolist()
 
     # download_wallet_addresses(wallet_ids, directory_raw_addresses)
-    # print("All addresses for selected wallets downloaded.")
-
     # download_wallet_transactions(wallet_ids, directory_raw_transactions)
-    # print("All transactions for selected wallets downloaded.")
 
     existing_merged_addresses = set(os.listdir(directory_processed_addr)) if os.path.exists(directory_processed_addr) else set()
     existing_merged_transactions = set(os.listdir(directory_processed_txs)) if os.path.exists(directory_processed_txs) else set()
@@ -173,37 +170,50 @@ if __name__ == "__main__":
         index=False
     )
     
-    plot_chunk_global_metrics(chunk_global_metrics_df)
+    # plot_chunk_global_metrics(chunk_global_metrics_df)
 
 #________________________________________________________________________________________________________________________
 
+    # Come applichiamo la rolling window e su quale dato:
+    # Applichiamo la rolling window sulla serie temporale dei time difference calcolati tra le transazioni consecutive di un wallet. Quindi, per ogni wallet:
+    # 	•	ordini le transazioni per timestamp
+    # 	•	calcoli la differenza di tempo tra ogni transazione e la precedente
+    # 	•	su questa serie di time difference applichi una rolling window (es. di 5 valori alla volta)
+    # 	•	calcoli statistiche mobili: media, varianza, min, max, ecc.
+
+    # PRENDO TOP 10 WALLET IN UN PERIODO DI 3 MESI E MI CALCOLO LE METRICHE MOBILI CON LA ROLLING WINDOW DI 5 TRANSAZIONI
+    list_of_periods_files = os.listdir("Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics")
+    test_period = list_of_periods_files[0]  # Example: "2023-01-01_2023-03-31.xlsx"
+    df_wallets_period = pd.read_excel(f"Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics/{test_period}")
+    df_wallets_period = df_wallets_period.sort_values(by="out_degree", ascending=False).head(10)
     
+    # ANDARE A PRENDERE LE TRANSAZIONI DAL FILE JSON /3_MONTHS/... 
+    top_wallet = df_wallets_period.iloc[0]["wallet_id"]
+    test_period = test_period.split(".")[0]
+    test_period = f"{test_period}.json"
+    txs_file_path = f"Data/chunks/SatoshiDice.com-original/3_months/{test_period}"
+    txs_file = json.load(open(txs_file_path, "r"))
     
+    # PRENDERE LE TRANSAZIONI DEL TOP WALLET
+    txs_top_wallet = [tx for tx in txs_file if tx["type"] == "sent" and tx["outputs"][0]["wallet_id"] == top_wallet]
+    txs_top_wallet = sorted(txs_top_wallet, key=lambda x: x["time"])
+    
+    #APPLICARE LA ROLLING WINDOW SUI TIME DIFFERENCE
+    timestamps = pd.to_datetime([tx["time"] for tx in txs_top_wallet], unit="s") 
+    time_diffs = timestamps.diff().total_seconds().dropna()
+    time_diffs_series = pd.Series(time_diffs)
 
+    rolling_mean = time_diffs_series.rolling(10).mean()
+    rolling_var  = time_diffs_series.rolling(10).var()
 
+    rolling_df = pd.DataFrame({
+        "mean": rolling_mean,
+        "variance": rolling_var
+    })
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-#TODO segnarsi txs con timestamp uguale sullo stesso blocco
-
-
-
+    rolling_df.plot(figsize=(14, 7), title=f"Rolling Metrics - Wallet {top_wallet}")
+    plt.xlabel("Transazione")
+    plt.ylabel("Valore")
+    plt.grid(True)
+    plt.show()
+    
