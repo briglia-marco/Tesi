@@ -7,6 +7,9 @@ from Scripts.graph import *
 from Scripts.metrics import *
 from Scripts.plot import *
 import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
 
@@ -185,10 +188,10 @@ if __name__ == "__main__":
     list_of_periods_files = os.listdir("Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics")
     test_period = list_of_periods_files[0]  # Example: "2023-01-01_2023-03-31.xlsx"
     df_wallets_period = pd.read_excel(f"Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics/{test_period}")
-    df_wallets_period = df_wallets_period.sort_values(by="out_degree", ascending=False).head(10)
+    df_wallets_period = df_wallets_period.sort_values(by="out_degree", ascending=False)
     
     # ANDARE A PRENDERE LE TRANSAZIONI DAL FILE JSON /3_MONTHS/... 
-    top_wallet = df_wallets_period.iloc[0]["wallet_id"]
+    top_wallet = df_wallets_period.iloc[1]["wallet_id"] #480 645
     test_period = test_period.split(".")[0]
     test_period = f"{test_period}.json"
     txs_file_path = f"Data/chunks/SatoshiDice.com-original/3_months/{test_period}"
@@ -198,22 +201,79 @@ if __name__ == "__main__":
     txs_top_wallet = [tx for tx in txs_file if tx["type"] == "sent" and tx["outputs"][0]["wallet_id"] == top_wallet]
     txs_top_wallet = sorted(txs_top_wallet, key=lambda x: x["time"])
     
-    #APPLICARE LA ROLLING WINDOW SUI TIME DIFFERENCE
+    # APPLICARE LA ROLLING WINDOW SUI TIME DIFFERENCE
     timestamps = pd.to_datetime([tx["time"] for tx in txs_top_wallet], unit="s") 
     time_diffs = timestamps.diff().total_seconds().dropna()
     time_diffs_series = pd.Series(time_diffs)
 
     rolling_mean = time_diffs_series.rolling(10).mean()
-    rolling_var  = time_diffs_series.rolling(10).var()
+    rolling_var = time_diffs_series.rolling(10).var()
 
     rolling_df = pd.DataFrame({
         "mean": rolling_mean,
         "variance": rolling_var
     })
-
-    rolling_df.plot(figsize=(14, 7), title=f"Rolling Metrics - Wallet {top_wallet}")
-    plt.xlabel("Transazione")
-    plt.ylabel("Valore")
-    plt.grid(True)
-    plt.show()
     
+    low_var_threshold = 10
+    num_low_var = (rolling_var < low_var_threshold).sum()
+    perc_low_var = num_low_var / len(rolling_var)
+    
+    print(f"Number of low variance values: {num_low_var}")
+    print(f"Percentage of low variance values: {perc_low_var:.2%}")
+    
+    # Identify long streaks of low variance
+    low_var_mask = (rolling_var < low_var_threshold).astype(int)
+    groups = low_var_mask.groupby((low_var_mask != low_var_mask.shift()).cumsum())
+    long_streaks = groups.sum().sort_values(ascending=False)
+    
+    summary = {
+        "wallet_id": top_wallet,
+        "n_tx": len(txs_top_wallet),
+        "percent_low_var_windows": perc_low_var,
+        "longest_low_var_streak": long_streaks.iloc[0],
+        "mean_time_diff": time_diffs_series.mean(),
+        "std_time_diff": time_diffs_series.std()
+    }
+    
+    print("Summary of metrics for top wallet:")
+    for key, value in summary.items():
+        print(f"{key}: {value}")
+        
+    # plot section
+    fig, axs = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
+
+    # Plot rolling mean
+    axs[0].plot(rolling_mean, label="Rolling Mean (sec)", color="blue")
+    axs[0].set_ylabel("Tempo medio")
+    axs[0].set_title(f"Rolling Mean - Wallet {wallet_id}")
+    axs[0].legend()
+    axs[0].grid(True)
+
+    # Plot rolling variance
+    axs[1].plot(rolling_var, label="Rolling Variance (sec²)", color="orange")
+    
+    # Evidenzia le finestre sotto la soglia
+    axs[1].axhline(y=low_var_threshold, color="red", linestyle="--", label=f"Soglia varianza = {low_var_threshold}")
+    
+    # Evidenzia finestre consecutive sotto soglia
+    below_threshold = rolling_var < low_var_threshold
+    highlighted = np.zeros_like(below_threshold, dtype=bool)
+
+    count = 0
+    for i in range(1, len(below_threshold)):
+        if below_threshold.iloc[i] and below_threshold.iloc[i-1]:
+            highlighted[i] = True
+            highlighted[i-1] = True
+            count += 1
+
+    axs[1].fill_between(rolling_var.index, rolling_var, low_var_threshold, where=(rolling_var < low_var_threshold), 
+                        interpolate=True, color='red', alpha=0.3, label="Sotto soglia")
+    
+    axs[1].set_ylabel("Varianza")
+    axs[1].set_xlabel("Indice finestra (transazioni)")
+    axs[1].set_title(f"Rolling Variance - Wallet {wallet_id}")
+    axs[1].legend()
+    axs[1].grid(True)
+
+    plt.tight_layout()
+    plt.show()
