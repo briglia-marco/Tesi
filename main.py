@@ -6,12 +6,12 @@ from Scripts.data_chunking import *
 from Scripts.graph import *
 from Scripts.metrics import *
 from Scripts.plot import *
+from Scripts.rolling_analisys import *
 import os
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
 
 if __name__ == "__main__":
+    
+# DOWNLOAD DATA
 
     directory_raw_addresses = "Data/raw/addresses"
     directory_raw_transactions = "Data/raw/transactions"
@@ -38,11 +38,9 @@ if __name__ == "__main__":
 
 #______________________________________________________________________________________________________________________
     
-    w1 = 0.35 # weight for total transactions
-    w2 = 0.03 # weight for total addresses
-    w3 = 0.25 # weight for transactions per address
-    w4 = 0.35 # weight for first 100 transactions/total transactions
-    w5 = 0.02 # weight for notoriety
+# MERGE JSON FILES
+
+    w1, w2, w3, w4, w5 = 0.35, 0.03, 0.25, 0.35, 0.02  # weights for total transactions, total addresses, transactions per address, first 100 transactions/total transactions, notoriety
     
     known_services = [
     "SatoshiDice.com",
@@ -107,6 +105,8 @@ if __name__ == "__main__":
     
 #_______________________________________________________________________________________________________________________
 
+# CHUNKING DATA
+
     intervals = [3, 6, 12, 24]  # months
     existing_chunk_files = set(os.listdir("Data/chunks/SatoshiDice.com-original")) if os.path.exists("Data/chunks/SatoshiDice.com-original") else set()
 
@@ -139,23 +139,10 @@ if __name__ == "__main__":
         print(f"Processing chunk: {chunk_to_process}")   
         build_graphs_for_wallet(chunk_to_process, directory_chunks)
         analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir="Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics")
-    
-    # BOT METRICS
-
-    # time variance -> bassa
-    # mean time diff -> bassa
-    # std dev time diff -> tende a essere bassa
-    # min time diff -> bassa o 0 se meno di 1 secondo
-
-
-    # HUMAN METRICS
-
-    # time variance -> alta
-    # mean time diff -> alta
-    # std dev time diff -> tende a essere alta
-    # min time diff -> tende a essere alta
 
 #________________________________________________________________________________________________________________________
+
+# CHUNK GLOBAL METRICS
 
     chunk_metrics_directory = "Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics"
     chunk_metrics_files = os.listdir(chunk_metrics_directory)
@@ -177,103 +164,48 @@ if __name__ == "__main__":
 
 #________________________________________________________________________________________________________________________
 
-    # Come applichiamo la rolling window e su quale dato:
-    # Applichiamo la rolling window sulla serie temporale dei time difference calcolati tra le transazioni consecutive di un wallet. Quindi, per ogni wallet:
-    # 	•	ordini le transazioni per timestamp
-    # 	•	calcoli la differenza di tempo tra ogni transazione e la precedente
-    # 	•	su questa serie di time difference applichi una rolling window (es. di 5 valori alla volta)
-    # 	•	calcoli statistiche mobili: media, varianza, min, max, ecc.
+# ROLLING WINDOW ANALYSIS
 
-    # PRENDO TOP 10 WALLET IN UN PERIODO DI 3 MESI E MI CALCOLO LE METRICHE MOBILI CON LA ROLLING WINDOW DI 5 TRANSAZIONI
-    list_of_periods_files = os.listdir("Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics")
-    test_period = list_of_periods_files[0]  # Example: "2023-01-01_2023-03-31.xlsx"
-    df_wallets_period = pd.read_excel(f"Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics/{test_period}")
-    df_wallets_period = df_wallets_period.sort_values(by="out_degree", ascending=False)
+    period_metric_file = "2013-01-18_to_2013-04-18.xlsx"
+    metrics_dir = "Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics"
+    json_dir = "Data/chunks/SatoshiDice.com-original/3_months"
+    window_size = 10
+    var_threshold = 10
     
-    # ANDARE A PRENDERE LE TRANSAZIONI DAL FILE JSON /3_MONTHS/... 
-    top_wallet = df_wallets_period.iloc[1]["wallet_id"] #480 645
-    test_period = test_period.split(".")[0]
-    test_period = f"{test_period}.json"
-    txs_file_path = f"Data/chunks/SatoshiDice.com-original/3_months/{test_period}"
-    txs_file = json.load(open(txs_file_path, "r"))
+    summary = analyze_wallet(
+        period_metrics_file=period_metric_file,
+        metrics_dir=metrics_dir,
+        json_dir=json_dir,
+        wallet_index=1, # Change index to analyze different wallets
+        window_size=window_size,
+        var_threshold=var_threshold
+    )
     
-    # PRENDERE LE TRANSAZIONI DEL TOP WALLET
-    txs_top_wallet = [tx for tx in txs_file if tx["type"] == "sent" and tx["outputs"][0]["wallet_id"] == top_wallet]
-    txs_top_wallet = sorted(txs_top_wallet, key=lambda x: x["time"])
+    for key, value in summary.items():
+        print(f"{key}: {value}")
     
-    # APPLICARE LA ROLLING WINDOW SUI TIME DIFFERENCE
-    timestamps = pd.to_datetime([tx["time"] for tx in txs_top_wallet], unit="s") 
-    time_diffs = timestamps.diff().total_seconds().dropna()
-    time_diffs_series = pd.Series(time_diffs)
-
-    rolling_mean = time_diffs_series.rolling(10).mean()
-    rolling_var = time_diffs_series.rolling(10).var()
-
-    rolling_df = pd.DataFrame({
-        "mean": rolling_mean,
-        "variance": rolling_var
-    })
+    summary = analyze_wallet(
+        period_metrics_file=period_metric_file,
+        metrics_dir=metrics_dir,
+        json_dir=json_dir,
+        wallet_index=480,  # Change index to analyze different wallets
+        window_size=window_size,
+        var_threshold=var_threshold
+    )
     
-    low_var_threshold = 10
-    num_low_var = (rolling_var < low_var_threshold).sum()
-    perc_low_var = num_low_var / len(rolling_var)
+    for key, value in summary.items():
+        print(f"{key}: {value}")
     
-    print(f"Number of low variance values: {num_low_var}")
-    print(f"Percentage of low variance values: {perc_low_var:.2%}")
+    summary = analyze_wallet(
+        period_metrics_file=period_metric_file,
+        metrics_dir=metrics_dir,
+        json_dir=json_dir,
+        wallet_index=645,  # Change index to analyze different wallets
+        window_size=window_size,
+        var_threshold=var_threshold
+    )
     
-    # Identify long streaks of low variance
-    low_var_mask = (rolling_var < low_var_threshold).astype(int)
-    groups = low_var_mask.groupby((low_var_mask != low_var_mask.shift()).cumsum())
-    long_streaks = groups.sum().sort_values(ascending=False)
-    
-    summary = {
-        "wallet_id": top_wallet,
-        "n_tx": len(txs_top_wallet),
-        "percent_low_var_windows": perc_low_var,
-        "longest_low_var_streak": long_streaks.iloc[0],
-        "mean_time_diff": time_diffs_series.mean(),
-        "std_time_diff": time_diffs_series.std()
-    }
-    
-    print("Summary of metrics for top wallet:")
     for key, value in summary.items():
         print(f"{key}: {value}")
         
-    # plot section
-    fig, axs = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
-
-    # Plot rolling mean
-    axs[0].plot(rolling_mean, label="Rolling Mean (sec)", color="blue")
-    axs[0].set_ylabel("Tempo medio")
-    axs[0].set_title(f"Rolling Mean - Wallet {wallet_id}")
-    axs[0].legend()
-    axs[0].grid(True)
-
-    # Plot rolling variance
-    axs[1].plot(rolling_var, label="Rolling Variance (sec²)", color="orange")
-    
-    # Evidenzia le finestre sotto la soglia
-    axs[1].axhline(y=low_var_threshold, color="red", linestyle="--", label=f"Soglia varianza = {low_var_threshold}")
-    
-    # Evidenzia finestre consecutive sotto soglia
-    below_threshold = rolling_var < low_var_threshold
-    highlighted = np.zeros_like(below_threshold, dtype=bool)
-
-    count = 0
-    for i in range(1, len(below_threshold)):
-        if below_threshold.iloc[i] and below_threshold.iloc[i-1]:
-            highlighted[i] = True
-            highlighted[i-1] = True
-            count += 1
-
-    axs[1].fill_between(rolling_var.index, rolling_var, low_var_threshold, where=(rolling_var < low_var_threshold), 
-                        interpolate=True, color='red', alpha=0.3, label="Sotto soglia")
-    
-    axs[1].set_ylabel("Varianza")
-    axs[1].set_xlabel("Indice finestra (transazioni)")
-    axs[1].set_title(f"Rolling Variance - Wallet {wallet_id}")
-    axs[1].legend()
-    axs[1].grid(True)
-
-    plt.tight_layout()
-    plt.show()
+    # _______________________________________________________________________________________________________________________

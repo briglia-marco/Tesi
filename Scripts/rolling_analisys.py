@@ -1,0 +1,156 @@
+import os
+import json
+import pandas as pd
+import matplotlib.pyplot as plt
+
+#_______________________________________________________________________________________________________________________
+
+def load_wallet_transactions(wallet_id, period_file_path, period_json_dir):
+    """
+    Load wallet transactions for a specific period.
+
+    Args:
+        wallet_id (str): The ID of the wallet.
+        period_file_path (str): The file path of the period metrics file.
+        period_json_dir (str): The directory containing the JSON files for the period.
+
+    Returns:
+        list: A list of transactions for the specified wallet.
+    """
+    period_name = os.path.splitext(period_file_path)[0] + ".json"
+    txs_file_path = os.path.join(period_json_dir, period_name)
+    with open(txs_file_path, "r") as f:
+        txs_file = json.load(f)
+
+    txs_wallet = [
+        tx for tx in txs_file 
+        if tx["type"] == "sent" and tx["outputs"][0]["wallet_id"] == wallet_id
+    ]
+    txs_wallet_sorted = sorted(txs_wallet, key=lambda x: x["time"])
+    return txs_wallet_sorted
+
+#_______________________________________________________________________________________________________________________
+
+def compute_time_differences(txs_wallet):
+    """
+    Compute time differences between consecutive transactions.
+    
+    Args:
+        txs_wallet (list): List of transactions for a specific wallet.
+        
+    Returns:
+        pd.Series: A pandas Series containing the time differences in seconds.
+    """
+    timestamps = pd.to_datetime([tx["time"] for tx in txs_wallet], unit="s")
+    time_diffs = timestamps.diff().total_seconds().dropna()
+    return pd.Series(time_diffs)
+
+def compute_rolling_metrics(time_diffs_series, window_size=10):
+    """
+    Compute rolling metrics for time differences.
+
+    Args:
+        time_diffs_series (pd.Series): A pandas Series containing time differences.
+        window_size (int, optional): The size of the rolling window. Defaults to 10.
+
+    Returns:
+        tuple: A tuple containing the rolling mean and rolling variance.
+    """
+    rolling_mean = time_diffs_series.rolling(window_size).mean()
+    rolling_var = time_diffs_series.rolling(window_size).var()
+    return rolling_mean, rolling_var
+
+#_______________________________________________________________________________________________________________________
+
+def summarize_wallet_behavior(wallet_id, txs_wallet, time_diffs_series, rolling_var, low_var_threshold):
+    """
+    Summarize the behavior of a wallet based on its transaction history.
+
+    Args:
+        wallet_id (_type_): _description_
+        txs_wallet (_type_): _description_
+        time_diffs_series (_type_): _description_
+        rolling_var (_type_): _description_
+        low_var_threshold (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    low_var_mask = (rolling_var < low_var_threshold).astype(int)
+    groups = low_var_mask.groupby((low_var_mask != low_var_mask.shift()).cumsum())
+    long_streaks = groups.sum().sort_values(ascending=False)
+
+    return {
+        "wallet_id": wallet_id,
+        "n_tx": len(txs_wallet),
+        "percent_low_var_windows": (rolling_var < low_var_threshold).sum() / len(rolling_var),
+        "longest_low_var_streak": long_streaks.iloc[0] if not long_streaks.empty else 0,
+        "mean_time_diff": time_diffs_series.mean(),
+        "std_time_diff": time_diffs_series.std()
+    }
+    
+#_______________________________________________________________________________________________________________________
+
+def plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, low_var_threshold):
+    """
+    Plot the rolling mean and variance of time differences for a wallet.
+    
+    Args:
+        wallet_id (str): The ID of the wallet.
+        rolling_mean (pd.Series): The rolling mean of time differences.
+        rolling_var (pd.Series): The rolling variance of time differences.
+        low_var_threshold (float): The threshold for low variance.
+    """
+    fig, axs = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
+
+    axs[0].plot(rolling_mean, label="Rolling Mean (sec)", color="blue")
+    axs[0].set_ylabel("Tempo medio")
+    axs[0].set_title(f"Rolling Mean - Wallet {wallet_id}")
+    axs[0].legend()
+    axs[0].grid(True)
+
+    axs[1].plot(rolling_var, label="Rolling Variance (sec²)", color="orange")
+    axs[1].axhline(y=low_var_threshold, color="red", linestyle="--", label=f"Soglia = {low_var_threshold}")
+
+    below_threshold = rolling_var < low_var_threshold
+    axs[1].fill_between(rolling_var.index, rolling_var, low_var_threshold, where=below_threshold,
+                        interpolate=True, color='red', alpha=0.3, label="Sotto soglia")
+
+    axs[1].set_ylabel("Varianza")
+    axs[1].set_xlabel("Indice finestra")
+    axs[1].set_title(f"Rolling Variance - Wallet {wallet_id}")
+    axs[1].legend()
+    axs[1].grid(True)
+
+    plt.tight_layout()
+    plt.show()
+    
+#_______________________________________________________________________________________________________________________
+
+def analyze_wallet(period_metrics_file, metrics_dir, json_dir, wallet_index=0, window_size=10, var_threshold=10):
+    """
+    Analyze a wallet's transaction behavior over a specified period.
+    
+    Args:
+        period_metrics_file (str): The file containing metrics for the period.
+        metrics_dir (str): Directory containing the metrics files.
+        json_dir (str): Directory containing the JSON files for the period.
+        wallet_index (int, optional): Index of the wallet to analyze. Defaults to 0.
+        window_size (int, optional): Size of the rolling window. Defaults to 10.
+        var_threshold (float, optional): Threshold for low variance. Defaults to 10.
+        
+    Returns:
+        dict: A summary of the wallet's behavior.
+    """
+    list_of_periods_files = os.listdir("Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics")
+    test_period = list_of_periods_files[0]  # Example: "2023-01-01_2023-03-31.xlsx"
+    df = pd.read_excel(f"{metrics_dir}/{test_period}")
+    df_sorted = df.sort_values(by="out_degree", ascending=False)
+    wallet_id = df_sorted.iloc[wallet_index]["wallet_id"]
+
+    txs_wallet = load_wallet_transactions(wallet_id, period_metrics_file, json_dir)
+    time_diffs = compute_time_differences(txs_wallet)
+    rolling_mean, rolling_var = compute_rolling_metrics(time_diffs, window_size)
+    summary = summarize_wallet_behavior(wallet_id, txs_wallet, time_diffs, rolling_var, var_threshold)
+    plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, var_threshold)
+    return summary
