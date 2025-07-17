@@ -127,7 +127,7 @@ if __name__ == "__main__":
     #     intervals=intervals,
     #     output_dir="Data/chunks/SatoshiDice.com-original/xlsx"
     # )
-# _______________________________________________________________________________________________________________________
+#_______________________________________________________________________________________________________________________
 
 # GRAPH AND METRICS FOR CHUNKS
 
@@ -172,6 +172,7 @@ if __name__ == "__main__":
     window_size = 10
     var_threshold = 10
     
+    print("\n" + "="*50 + "\n")
     summary = analyze_wallet(
         period_metrics_file=period_metric_file,
         metrics_dir=metrics_dir,
@@ -183,7 +184,8 @@ if __name__ == "__main__":
     
     for key, value in summary.items():
         print(f"{key}: {value}")
-    
+        
+    print("\n" + "="*50 + "\n")
     summary = analyze_wallet(
         period_metrics_file=period_metric_file,
         metrics_dir=metrics_dir,
@@ -195,7 +197,8 @@ if __name__ == "__main__":
     
     for key, value in summary.items():
         print(f"{key}: {value}")
-    
+        
+    print("\n" + "="*50 + "\n")
     summary = analyze_wallet(
         period_metrics_file=period_metric_file,
         metrics_dir=metrics_dir,
@@ -208,4 +211,7 @@ if __name__ == "__main__":
     for key, value in summary.items():
         print(f"{key}: {value}")
         
-    # _______________________________________________________________________________________________________________________
+    print("\n" + "="*50 + "\n")
+        
+#_______________________________________________________________________________________________________________________
+
