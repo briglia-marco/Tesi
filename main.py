@@ -171,7 +171,7 @@ if __name__ == "__main__":
     json_dir = "Data/chunks/SatoshiDice.com-original/3_months"
     window_size = 10
     var_threshold = 10
-    
+
     print("\n" + "="*50 + "\n")
     summary = analyze_wallet(
         period_metrics_file=period_metric_file,
@@ -181,10 +181,7 @@ if __name__ == "__main__":
         window_size=window_size,
         var_threshold=var_threshold
     )
-    
-    for key, value in summary.items():
-        print(f"{key}: {value}")
-        
+
     print("\n" + "="*50 + "\n")
     summary = analyze_wallet(
         period_metrics_file=period_metric_file,
@@ -194,10 +191,7 @@ if __name__ == "__main__":
         window_size=window_size,
         var_threshold=var_threshold
     )
-    
-    for key, value in summary.items():
-        print(f"{key}: {value}")
-        
+
     print("\n" + "="*50 + "\n")
     summary = analyze_wallet(
         period_metrics_file=period_metric_file,
@@ -207,11 +201,8 @@ if __name__ == "__main__":
         window_size=window_size,
         var_threshold=var_threshold
     )
-    
-    for key, value in summary.items():
-        print(f"{key}: {value}")
-        
+
     print("\n" + "="*50 + "\n")
         
+# TODO migliorare la visulazzazione dei grafici, zoomare su un periodo specifico, aggiungere annotazioni, etc.
 #_______________________________________________________________________________________________________________________
-

@@ -78,7 +78,7 @@ def summarize_wallet_behavior(wallet_id, txs_wallet, time_diffs_series, rolling_
     """
     low_var_mask = (rolling_var < low_var_threshold).astype(int)
     groups = low_var_mask.groupby((low_var_mask != low_var_mask.shift()).cumsum())
-    long_streaks = groups.sum().sort_values(ascending=False)
+    long_streaks = groups.sum().sort_values(ascending=False) # Get the longest streaks of low variance
 
     return {
         "wallet_id": wallet_id,
@@ -106,6 +106,7 @@ def plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, low_var_threshold
     axs[0].plot(rolling_mean, label="Rolling Mean (sec)", color="blue")
     axs[0].set_ylabel("Tempo medio")
     axs[0].set_title(f"Rolling Mean - Wallet {wallet_id}")
+    #axs[0].set_yscale("log")
     axs[0].legend()
     axs[0].grid(True)
 
@@ -119,6 +120,7 @@ def plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, low_var_threshold
     axs[1].set_ylabel("Varianza")
     axs[1].set_xlabel("Indice finestra")
     axs[1].set_title(f"Rolling Variance - Wallet {wallet_id}")
+    axs[1].set_yscale("log")
     axs[1].legend()
     axs[1].grid(True)
 
@@ -152,5 +154,7 @@ def analyze_wallet(period_metrics_file, metrics_dir, json_dir, wallet_index=0, w
     time_diffs = compute_time_differences(txs_wallet)
     rolling_mean, rolling_var = compute_rolling_metrics(time_diffs, window_size)
     summary = summarize_wallet_behavior(wallet_id, txs_wallet, time_diffs, rolling_var, var_threshold)
+    for key, value in summary.items():
+        print(f"{key}: {value}")
     plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, var_threshold)
     return summary
