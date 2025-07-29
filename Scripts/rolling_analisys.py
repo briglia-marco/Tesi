@@ -19,12 +19,14 @@ def load_wallet_transactions(wallet_id, period_file_path, period_json_dir):
     """
     period_name = os.path.splitext(period_file_path)[0] + ".json"
     txs_file_path = os.path.join(period_json_dir, period_name)
+    token = txs_file_path.split(".")
+    txs_file_path = token[0] + "." + token[1] + "." + token[3]
     with open(txs_file_path, "r") as f:
         txs_file = json.load(f)
 
     txs_wallet = [
-        tx for tx in txs_file 
-        if tx["type"] == "sent" and tx["outputs"][0]["wallet_id"] == wallet_id
+        tx for tx in txs_file
+        if tx["type"] == "sent" and tx["outputs"] and tx["outputs"][0]["wallet_id"] == wallet_id
     ]
     txs_wallet_sorted = sorted(txs_wallet, key=lambda x: x["time"])
     return txs_wallet_sorted
@@ -129,7 +131,8 @@ def plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, low_var_threshold
     
 #_______________________________________________________________________________________________________________________
 
-def analyze_wallet(period_metrics_file, metrics_dir, json_dir, wallet_index=0, window_size=10, var_threshold=10):
+def analyze_wallet(period_metrics_file, metrics_dir, json_dir, wallet_index=0, wallet_id_override=None,
+                   window_size=10, var_threshold=10):
     """
     Analyze a wallet's transaction behavior over a specified period.
     
@@ -138,23 +141,44 @@ def analyze_wallet(period_metrics_file, metrics_dir, json_dir, wallet_index=0, w
         metrics_dir (str): Directory containing the metrics files.
         json_dir (str): Directory containing the JSON files for the period.
         wallet_index (int, optional): Index of the wallet to analyze. Defaults to 0.
+        wallet_id_override (str, optional): Direct wallet ID to analyze. Overrides index-based selection.
         window_size (int, optional): Size of the rolling window. Defaults to 10.
         var_threshold (float, optional): Threshold for low variance. Defaults to 10.
         
     Returns:
         dict: A summary of the wallet's behavior.
     """
-    list_of_periods_files = os.listdir("Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics")
-    test_period = list_of_periods_files[0]  # Example: "2023-01-01_2023-03-31.xlsx"
-    df = pd.read_excel(f"{metrics_dir}/{test_period}")
+    df = pd.read_excel(f"{metrics_dir}/{period_metrics_file}")
     df_sorted = df.sort_values(by="out_degree", ascending=False)
-    wallet_id = df_sorted.iloc[wallet_index]["wallet_id"]
+    
+    if wallet_id_override is not None:
+        wallet_id = wallet_id_override
+    else:
+        wallet_id = df_sorted.iloc[wallet_index]["wallet_id"]
 
     txs_wallet = load_wallet_transactions(wallet_id, period_metrics_file, json_dir)
     time_diffs = compute_time_differences(txs_wallet)
     rolling_mean, rolling_var = compute_rolling_metrics(time_diffs, window_size)
     summary = summarize_wallet_behavior(wallet_id, txs_wallet, time_diffs, rolling_var, var_threshold)
-    for key, value in summary.items():
-        print(f"{key}: {value}")
-    plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, var_threshold)
+
+    #plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, var_threshold)
+
     return summary
+
+#_______________________________________________________________________________________________________________________
+
+def get_wallets_meeting_criteria(metrics_path, min_tx=100):
+    """
+    Get a list of wallet IDs that meet the specified criteria.
+
+    Args:
+        metrics_path (str): The path to the metrics file.
+        min_tx (int): The minimum number of transactions required.
+
+    Returns:
+        list: A list of wallet IDs that meet the criteria.
+    """
+    print(f"Loading metrics from: {metrics_path}")
+    df = pd.read_excel(metrics_path)
+    filtered = df[df["out_degree"] >= min_tx]
+    return filtered["wallet_id"].tolist()

@@ -38,11 +38,11 @@ def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
         list: A list of all transactions associated with the wallet ID.
     """
     base_url = "https://www.walletexplorer.com/api/1/wallet"
-    from_index = 4800000
+    from_index = 0
     count = 100
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    headers = {'User-Agent': 'Mozilla/5.0' + '(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
     chunk_size = 100_000
-    file_index = 48
+    file_index = 11  
     all_transactions = []
     os.makedirs(output_dir, exist_ok=True)
 

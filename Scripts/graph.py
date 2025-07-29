@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 #_______________________________________________________________________________________________________________________
 
-def build_graphs_for_wallet(chunk_to_process, directory_chunks):
+def build_graphs_for_wallet(chunk_to_process, directory_chunks, service_node):
     """Build graphs for a specific wallet based on the provided chunks.
 
     Args:
@@ -21,7 +21,7 @@ def build_graphs_for_wallet(chunk_to_process, directory_chunks):
         chunk_to_process_file = f"{chunk_to_process}.json"
         build_wallet_graph_for_chunk(
             base_directory=directory_chunks,
-            service_node="SatoshiDice.com-original",
+            service_node=service_node, 
             chunk_to_process=chunk_to_process_file,
             output_dir="Data/graphs"
         )
@@ -70,6 +70,9 @@ def build_wallet_graph_for_chunk(base_directory, service_node, chunk_to_process,
             if transaction["outputs"]:
                 amount = transaction["outputs"][0]["amount"]
                 receiver = transaction["outputs"][0]["wallet_id"]
+            else:
+                amount = 0
+                receiver = "Unknown"
             sender = service_node
             G.add_node(receiver, type='wallet')
             G.add_edge(sender, receiver, amount=amount, timestamp=timestamp, txid=transaction_id, direction="sent")

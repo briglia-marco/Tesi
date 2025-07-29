@@ -98,6 +98,9 @@ def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
                 if transaction["outputs"]:
                     wallet_id = transaction["outputs"][0]["wallet_id"]
                     amount = transaction["outputs"][0]["amount"]
+                else:
+                    wallet_id = "Unknown"
+                    amount = 0
                 stats = wallet_stats.get(wallet_id, {"in_degree": 0, "out_degree": 0, "total_btc_received": 0, "total_btc_sent": 0})
                 stats["out_degree"] += 1
                 stats["total_btc_sent"] += amount
@@ -107,7 +110,7 @@ def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
             records.append({"wallet_id": wallet_id, **stats})
 
     df = pd.DataFrame(records)
-    df.sort_values(by="in_degree", ascending=False, inplace=True)
+    df.sort_values(by="out_degree", ascending=False, inplace=True)
     df.reset_index(drop=True, inplace=True)
     return df
 

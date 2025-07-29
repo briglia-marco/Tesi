@@ -52,7 +52,7 @@ if __name__ == "__main__":
     "CloudBet.com",
     "BitcoinVideoCasino.com",
     "NitrogenSports.eu",
-    "YABTCL.com",
+    "SatoshiDice.com-original",
     "Coinroll.com",
     "777Coin.com",
     "Crypto-Games.net",
@@ -107,13 +107,30 @@ if __name__ == "__main__":
 
 # CHUNKING DATA
 
+
+
+
+
+
+    service = "YABTCL.com"  # Example service, can be changed
+    transactions_for_chunk_threshold = 1000  # Minimum number of transactions to consider for chunking
+    min_transactions_for_wallet_to_analyze = 50 # modify this threshold as needed
+    # SatoshiDice.com-original 100000, 5000
+    # BitZillions.com, 15000, 1000
+    # YABTCL.com different distribution patterns
+    
+    
+    
+    
+    
+    
     intervals = [3, 6, 12, 24]  # months
-    existing_chunk_files = set(os.listdir("Data/chunks/SatoshiDice.com-original")) if os.path.exists("Data/chunks/SatoshiDice.com-original") else set()
+    existing_chunk_files = set(os.listdir(f"Data/chunks/{service}")) if os.path.exists(f"Data/chunks/{service}") else set()
 
     for interval in intervals:
         if not f"{interval}_months" in existing_chunk_files:
             split_transactions_into_chunks(
-                wallet_id="SatoshiDice.com-original",
+                wallet_id=service,
                 input_dir="Data/raw/transactions",
                 output_base_dir="Data/chunks",
                 intervals_months=[interval]
@@ -131,23 +148,25 @@ if __name__ == "__main__":
 
 # GRAPH AND METRICS FOR CHUNKS
 
-    directory_chunks = "Data/chunks/SatoshiDice.com-original/3_months"
-    chunks_to_process = pd.read_excel("Data/chunks/SatoshiDice.com-original/xlsx/3_months.xlsx")
-    chunks_to_process = chunks_to_process[chunks_to_process["count"] > 100000]
-    
-    for chunk_to_process in chunks_to_process["chunk"].tolist():     
-        print(f"Processing chunk: {chunk_to_process}")   
-        build_graphs_for_wallet(chunk_to_process, directory_chunks)
-        analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir="Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics")
+    directory_chunks = f"Data/chunks/{service}/3_months"
+    chunks_to_process = pd.read_excel(f"Data/chunks/{service}/xlsx/3_months.xlsx")
+    chunks_to_process = chunks_to_process[chunks_to_process["count"] > transactions_for_chunk_threshold] # modify this threshold as needed
+
+    for chunk_to_process in chunks_to_process["chunk"].tolist():
+        print(f"Processing chunk: {chunk_to_process}")
+        build_graphs_for_wallet(chunk_to_process, directory_chunks, service)
+        analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir=f"Data/chunks/{service}/xlsx/chunk_metrics")
 
 #________________________________________________________________________________________________________________________
 
 # CHUNK GLOBAL METRICS
 
-    chunk_metrics_directory = "Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics"
+    chunk_metrics_directory = f"Data/chunks/{service}/xlsx/chunk_metrics"
     chunk_metrics_files = os.listdir(chunk_metrics_directory)
     chunk_global_metrics_df = pd.DataFrame()
     for chunk_file in chunk_metrics_files:
+        if not chunk_file.endswith(".xlsx"):
+            continue
         chunk_file_name = chunk_file.split(".")[0]
         chunk_global_metrics_df = calculate_chunk_global_metrics(
             chunk_file_path=os.path.join(chunk_metrics_directory, chunk_file),
@@ -156,7 +175,7 @@ if __name__ == "__main__":
         )
 
     chunk_global_metrics_df.to_excel(
-        "Data/chunks/SatoshiDice.com-original/xlsx/chunk_global_metrics.xlsx",
+        f"Data/chunks/{service}/xlsx/chunk_global_metrics.xlsx",
         index=False
     )
     
@@ -166,43 +185,68 @@ if __name__ == "__main__":
 
 # ROLLING WINDOW ANALYSIS
 
-    period_metric_file = "2013-01-18_to_2013-04-18.xlsx"
-    metrics_dir = "Data/chunks/SatoshiDice.com-original/xlsx/chunk_metrics"
-    json_dir = "Data/chunks/SatoshiDice.com-original/3_months"
+    metrics_dir = f"Data/chunks/{service}/xlsx/chunk_metrics"
+    json_dir = f"Data/chunks/{service}/3_months"
     window_size = 10
     var_threshold = 10
 
-    print("\n" + "="*50 + "\n")
-    summary = analyze_wallet(
-        period_metrics_file=period_metric_file,
-        metrics_dir=metrics_dir,
-        json_dir=json_dir,
-        wallet_index=1, # Change index to analyze different wallets
-        window_size=window_size,
-        var_threshold=var_threshold
-    )
+    all_metrics_files = [
+        f for f in os.listdir(metrics_dir)
+        if f.endswith(".xlsx") and "json_metrics" in f
+    ]
 
-    print("\n" + "="*50 + "\n")
-    summary = analyze_wallet(
-        period_metrics_file=period_metric_file,
-        metrics_dir=metrics_dir,
-        json_dir=json_dir,
-        wallet_index=480,  # Change index to analyze different wallets
-        window_size=window_size,
-        var_threshold=var_threshold
-    )
+    for metrics_file in all_metrics_files:
+        print(f"\nAnalisi periodo: {metrics_file}")
+        
+        metrics_path = os.path.join(metrics_dir, metrics_file)
 
-    print("\n" + "="*50 + "\n")
-    summary = analyze_wallet(
-        period_metrics_file=period_metric_file,
-        metrics_dir=metrics_dir,
-        json_dir=json_dir,
-        wallet_index=645,  # Change index to analyze different wallets
-        window_size=window_size,
-        var_threshold=var_threshold
-    )
+        wallet_ids = get_wallets_meeting_criteria(metrics_path, min_tx=min_transactions_for_wallet_to_analyze)
 
-    print("\n" + "="*50 + "\n")
+        log_report = []
+        
+        for wallet_id in wallet_ids:
+            summary = analyze_wallet(
+                period_metrics_file=metrics_file,
+                metrics_dir=metrics_dir,
+                json_dir=json_dir,
+                wallet_id_override=wallet_id,
+                window_size=window_size,
+                var_threshold=var_threshold
+            )
+            for key, value in summary.items():
+                log_report.append(f"{key}: {value}\n")
+            log_report.append("\n" + "="*50 + "\n")
+
+        os.makedirs(f"Data/chunks/{service}/logs", exist_ok=True)
+        log_file_path = f"Data/chunks/{service}/logs/{metrics_file.split('.')[0]}.log"
+        if log_report:
+            with open(log_file_path, "w") as log_file:
+                log_file.writelines(log_report)
+
+    # period_metric_file = "2017-09-12_to_2019-09-12.xlsx"
+    # period_metric_file1 = "2017-09-12_to_2019-09-12.json_metrics.xlsx"
+    # metrics_dir = f"Data/chunks/{service}/xlsx/chunk_metrics"
+    # json_dir = f"Data/chunks/{service}/24_months"
+    # metrics_path = f"{metrics_dir}/{period_metric_file1}"
+    # window_size = 10
+    # var_threshold = 10
+    # min_transactions = 100
+    
+    # wallet_ids = get_wallets_meeting_criteria(metrics_path, min_tx=min_transactions)
+    
+    
+    # for wallet_id in wallet_ids:
+    #     print("\n" + "="*50 + "\n")
+
+    #     analyze_wallet(
+    #         period_metrics_file=period_metric_file1,
+    #         metrics_dir=metrics_dir,
+    #         json_dir=json_dir,
+    #         wallet_id_override=wallet_id,
+    #         window_size=10,
+    #         var_threshold=10
+    #     )
+
         
 # TODO migliorare la visulazzazione dei grafici, zoomare su un periodo specifico, aggiungere annotazioni, etc.
 #_______________________________________________________________________________________________________________________
