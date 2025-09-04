@@ -112,18 +112,13 @@ if __name__ == "__main__":
 
 
 
-    service = "YABTCL.com"  # Example service, can be changed
-    transactions_for_chunk_threshold = 1000  # Minimum number of transactions to consider for chunking
-    min_transactions_for_wallet_to_analyze = 50 # modify this threshold as needed
+    service = "SatoshiDice.com-original"  # Example service, can be changed
+    transactions_for_chunk_threshold = 100000  # Minimum number of transactions to consider for chunking
+    min_transactions_for_wallet_to_analyze = 1000  # modify this threshold as needed
     # SatoshiDice.com-original 100000, 5000
     # BitZillions.com, 15000, 1000
-    # YABTCL.com different distribution patterns
-    
-    
-    
-    
-    
-    
+    # YABTCL.com different distribution patterns 1000, 100
+
     intervals = [3, 6, 12, 24]  # months
     existing_chunk_files = set(os.listdir(f"Data/chunks/{service}")) if os.path.exists(f"Data/chunks/{service}") else set()
 
@@ -187,6 +182,7 @@ if __name__ == "__main__":
 
     metrics_dir = f"Data/chunks/{service}/xlsx/chunk_metrics"
     json_dir = f"Data/chunks/{service}/3_months"
+    
     window_size = 10
     var_threshold = 10
 
@@ -209,6 +205,7 @@ if __name__ == "__main__":
                 period_metrics_file=metrics_file,
                 metrics_dir=metrics_dir,
                 json_dir=json_dir,
+                service=service,
                 wallet_id_override=wallet_id,
                 window_size=window_size,
                 var_threshold=var_threshold
@@ -222,31 +219,14 @@ if __name__ == "__main__":
         if log_report:
             with open(log_file_path, "w") as log_file:
                 log_file.writelines(log_report)
-
-    # period_metric_file = "2017-09-12_to_2019-09-12.xlsx"
-    # period_metric_file1 = "2017-09-12_to_2019-09-12.json_metrics.xlsx"
-    # metrics_dir = f"Data/chunks/{service}/xlsx/chunk_metrics"
-    # json_dir = f"Data/chunks/{service}/24_months"
-    # metrics_path = f"{metrics_dir}/{period_metric_file1}"
-    # window_size = 10
-    # var_threshold = 10
-    # min_transactions = 100
-    
-    # wallet_ids = get_wallets_meeting_criteria(metrics_path, min_tx=min_transactions)
-    
-    
-    # for wallet_id in wallet_ids:
-    #     print("\n" + "="*50 + "\n")
-
-    #     analyze_wallet(
-    #         period_metrics_file=period_metric_file1,
-    #         metrics_dir=metrics_dir,
-    #         json_dir=json_dir,
-    #         wallet_id_override=wallet_id,
-    #         window_size=10,
-    #         var_threshold=10
-    #     )
-
         
-# TODO migliorare la visulazzazione dei grafici, zoomare su un periodo specifico, aggiungere annotazioni, etc.
 #_______________________________________________________________________________________________________________________
+
+# DETECTION OF GAMBLING PATTERN
+
+    # algoritmo che prende solo i wallet con una percentuale abbastanza alta di low variance
+    # dai file di log (scegliere il treshold minimo significativo)
+    # prendere tutte le transazioni di quel wallet in ordine e le analizza per identificare
+    # schemi di gioco d'azzardo consecutivo come Martingale e D'Alembert
+    
+    

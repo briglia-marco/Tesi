@@ -28,6 +28,7 @@ def load_wallet_transactions(wallet_id, period_file_path, period_json_dir):
         tx for tx in txs_file
         if tx["type"] == "sent" and tx["outputs"] and tx["outputs"][0]["wallet_id"] == wallet_id
     ]
+    print("Wallet transactions loaded.")
     txs_wallet_sorted = sorted(txs_wallet, key=lambda x: x["time"])
     return txs_wallet_sorted
 
@@ -93,7 +94,7 @@ def summarize_wallet_behavior(wallet_id, txs_wallet, time_diffs_series, rolling_
     
 #_______________________________________________________________________________________________________________________
 
-def plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, low_var_threshold):
+def plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, low_var_threshold, service):
     """
     Plot the rolling mean and variance of time differences for a wallet.
     
@@ -126,12 +127,15 @@ def plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, low_var_threshold
     axs[1].legend()
     axs[1].grid(True)
 
-    plt.tight_layout()
-    plt.show()
+    os.makedirs(f"Data/chunks/{service}/plots", exist_ok=True)
+    plt.savefig(f"Data/chunks/{service}/plots/rolling_metrics_{wallet_id}.png")
+    
+    #plt.tight_layout()
+    #plt.show()
     
 #_______________________________________________________________________________________________________________________
 
-def analyze_wallet(period_metrics_file, metrics_dir, json_dir, wallet_index=0, wallet_id_override=None,
+def analyze_wallet(period_metrics_file, metrics_dir, json_dir, service, wallet_index=0, wallet_id_override=None,
                    window_size=10, var_threshold=10):
     """
     Analyze a wallet's transaction behavior over a specified period.
@@ -161,7 +165,7 @@ def analyze_wallet(period_metrics_file, metrics_dir, json_dir, wallet_index=0, w
     rolling_mean, rolling_var = compute_rolling_metrics(time_diffs, window_size)
     summary = summarize_wallet_behavior(wallet_id, txs_wallet, time_diffs, rolling_var, var_threshold)
 
-    #plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, var_threshold)
+    plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, var_threshold, service)
 
     return summary
 

@@ -118,7 +118,6 @@ def export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process):
             "direction": data.get("direction", "")
         })
         
-    #get the base name of the chunk file without extension
     chunk_base_name = os.path.splitext(os.path.basename(chunk_to_process))[0]
     
     nodes_df = pd.DataFrame(nodes_data)
