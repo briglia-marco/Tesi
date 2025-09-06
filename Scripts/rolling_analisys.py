@@ -5,28 +5,41 @@ import matplotlib.pyplot as plt
 
 #_______________________________________________________________________________________________________________________
 
-def load_wallet_transactions(wallet_id, period_file_path, period_json_dir):
+def load_wallet_payouts(wallet_id, payouts_file):
     """
-    Load wallet transactions for a specific period.
+    Load wallet payouts for a specific period.
 
     Args:
         wallet_id (str): The ID of the wallet.
-        period_file_path (str): The file path of the period metrics file.
-        period_json_dir (str): The directory containing the JSON files for the period.
+        payouts_file (list): List of all payouts in the period.
+
+    Returns:
+        list: A list of payouts for the specified wallet.
+    """
+    payouts_wallet = [
+        payout for payout in payouts_file
+        if payout["type"] == "sent" and payout["outputs"] and payout["outputs"][0]["wallet_id"] == wallet_id
+    ]
+    print("Wallet payouts loaded.")
+    payouts_wallet_sorted = sorted(payouts_wallet, key=lambda x: x["time"])
+    return payouts_wallet_sorted
+
+#______________________________________________________________________________________________________________________
+
+def load_wallet_bets(wallet_id, txs_file):
+    """
+    Load wallet bets for a specific period.
+
+    Args:
+        wallet_id (str): The ID of the wallet.
+        txs_file (list): List of all transactions in the period.
 
     Returns:
         list: A list of transactions for the specified wallet.
     """
-    period_name = os.path.splitext(period_file_path)[0] + ".json"
-    txs_file_path = os.path.join(period_json_dir, period_name)
-    token = txs_file_path.split(".")
-    txs_file_path = token[0] + "." + token[1] + "." + token[3]
-    with open(txs_file_path, "r") as f:
-        txs_file = json.load(f)
-
     txs_wallet = [
         tx for tx in txs_file
-        if tx["type"] == "sent" and tx["outputs"] and tx["outputs"][0]["wallet_id"] == wallet_id
+        if tx["type"] == "received" and tx.get("wallet_id") == wallet_id
     ]
     print("Wallet transactions loaded.")
     txs_wallet_sorted = sorted(txs_wallet, key=lambda x: x["time"])
@@ -138,8 +151,8 @@ def plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, low_var_threshold
 def analyze_wallet(period_metrics_file, metrics_dir, json_dir, service, wallet_index=0, wallet_id_override=None,
                    window_size=10, var_threshold=10):
     """
-    Analyze a wallet's transaction behavior over a specified period.
-    
+    Analyze a wallet's betting behavior over a specified period.
+
     Args:
         period_metrics_file (str): The file containing metrics for the period.
         metrics_dir (str): Directory containing the metrics files.
@@ -159,8 +172,15 @@ def analyze_wallet(period_metrics_file, metrics_dir, json_dir, service, wallet_i
         wallet_id = wallet_id_override
     else:
         wallet_id = df_sorted.iloc[wallet_index]["wallet_id"]
+        
+    period_name = os.path.splitext(period_metrics_file)[0] + ".json"
+    txs_file_path = os.path.join(json_dir, period_name)
+    token = txs_file_path.split(".")
+    txs_file_path = token[0] + "." + token[1] + "." + token[3]
+    with open(txs_file_path, "r") as f:
+        txs_file = json.load(f)
 
-    txs_wallet = load_wallet_transactions(wallet_id, period_metrics_file, json_dir)
+    txs_wallet = load_wallet_bets(wallet_id, txs_file)
     time_diffs = compute_time_differences(txs_wallet)
     rolling_mean, rolling_var = compute_rolling_metrics(time_diffs, window_size)
     summary = summarize_wallet_behavior(wallet_id, txs_wallet, time_diffs, rolling_var, var_threshold)

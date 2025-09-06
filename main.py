@@ -244,26 +244,54 @@ if __name__ == "__main__":
         
 #_______________________________________________________________________________________________________________________
 
-# DETECTION OF GAMBLING PATTERN
+# # DETECTION OF GAMBLING PATTERN
 
-    # algoritmo che prende solo i wallet con una percentuale abbastanza alta di low variance
-    # dai file di log (scegliere il treshold minimo significativo)
-    # prendere tutte le transazioni di quel wallet in ordine e le analizza per identificare
-    # schemi di gioco d'azzardo consecutivo come Martingale e D'Alembert
+#     # algoritmo che prende solo i wallet con una percentuale abbastanza alta di low variance
+#     # dai file di log (scegliere il treshold minimo significativo)
+#     # prendere tutte le transazioni di quel wallet in ordine e le analizza per identificare
+#     # schemi di gioco d'azzardo consecutivo come Martingale e D'Alembert
     
-    logs_folder = f"Data/chunks/{service}/logs"
-    percent_low_var_windows_treshold = 0.50
-    selected_wallets = {}
+#     logs_folder = f"Data/chunks/{service}/logs"
+#     results_folder = f"Data/Results/{service}"
+#     percent_low_var_windows_treshold = 0.50
+#     selected_wallets = {}
 
-    for log_file in os.listdir(logs_folder):
-        if not log_file.endswith(".json"):
-            continue
-        log_path = os.path.join(logs_folder, log_file)
-        with open(log_path, "r") as f:
-            data = json.load(f)
-        df_log = pd.DataFrame(data["wallets"])
-        df_log = df_log[df_log["percent_low_var_windows"] >= percent_low_var_windows_treshold]
-        selected_wallets[f"{log_file.split('.')[0]}"] = df_log["wallet_id"].tolist()
+#     # scansione dei file di log per selezionare i wallet con alta percentuale di low variance
+#     for log_file in os.listdir(logs_folder):
+#         if not log_file.endswith(".json"):
+#             continue
+#         log_path = os.path.join(logs_folder, log_file)
+#         with open(log_path, "r") as f:
+#             data = json.load(f)
+#         df_log = pd.DataFrame(data["wallets"])
+#         df_log = df_log[df_log["percent_low_var_windows"] >= percent_low_var_windows_treshold]
+#         selected_wallets[f"{log_file.split('.')[0]}"] = df_log["wallet_id"].tolist()
 
+#     # logica per il recupero delle transazioni dai file json dei chunk
+#     # prendo il periodo dalla chiave del dizionario e scanno il file corrispondente 
+#     # per ogni wallet della lista, recupero le transazioni in ordine
+#     for period, wallets in selected_wallets.items():
+#         json_file_path = os.path.join(f"Data/chunks/{service}/3_months", f"{period}.json")
+#         with open(json_file_path, "r") as f:
+#             data = json.load(f)
+#         for wallet_id in wallets:
+#             # controllo se il wallet è già stato analizzato
+#             # if check_if_wallet_is_analyzed(wallet_id, results_folder):
+#             #   print(f"Wallet {wallet_id} already analyzed. Skipping.")
+#             #   continue
+#             txs_wallet = load_wallet_bets(wallet_id, data)
+#             if not txs_wallet:
+#                 print(f"Wallet {wallet_id} has no transactions in {period}. Skipping.")
+#                 continue
+#             martingale_results = detect_martingale(txs_wallet)
+#             dAlembert_results = detect_dAlembert(txs_wallet)
+            
+            
+
+#     # per ogni wallet si controlla se è già stato analizzato, se no
+#     # analisi completa di entrambi gli algoritmi di gambling
+    
+#     # metodo di salvataggio dei risultati dell'analisi
+    
     
 
