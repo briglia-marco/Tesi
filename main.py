@@ -79,6 +79,8 @@ if __name__ == "__main__":
 
     wallet_ids = df_wallets["wallet_id"].iloc[:15].tolist()
 
+    # UNCOMMENT TO DOWNLOAD RAW DATA
+
     # download_wallet_addresses(wallet_ids, directory_raw_addresses)
     # download_wallet_transactions(wallet_ids, directory_raw_transactions)
 
@@ -198,8 +200,6 @@ if __name__ == "__main__":
         f"Data/chunks/{service}/xlsx/chunk_global_metrics.xlsx", index=False
     )
 
-    # plot_chunk_global_metrics(chunk_global_metrics_df)
-
     # ________________________________________________________________________________________________________________________
 
     # ROLLING WINDOW ANALYSIS
@@ -270,17 +270,12 @@ if __name__ == "__main__":
 
     # DETECTION OF GAMBLING PATTERN
 
-    # algoritmo che prende solo i wallet con una percentuale abbastanza alta di low variance
-    # dai file di log (scegliere il treshold minimo significativo)
-    # prendere tutte le transazioni di quel wallet in ordine e le analizza per identificare
-    # schemi di gioco d'azzardo consecutivo come Martingale e D'Alembert
-
     logs_folder = f"Data/chunks/{service}/logs"
     results_folder = f"Data/Results/{service}"
     percent_low_var_windows_treshold = 0.50
     selected_wallets = {}
 
-    # scansione dei file di log per selezionare i wallet con alta percentuale di low variance
+    # scan logs to find wallets meeting the low variance windows criteria
     for log_file in os.listdir(logs_folder):
         if not log_file.endswith(".json"):
             continue
@@ -293,9 +288,6 @@ if __name__ == "__main__":
         ]
         selected_wallets[f"{log_file.split('.')[0]}"] = df_log["wallet_id"].tolist()
 
-    # logica per il recupero delle transazioni dai file json dei chunk
-    # prendo il periodo dalla chiave del dizionario e scanno il file corrispondente
-    # per ogni wallet della lista, recupero le transazioni in ordine
     for period, wallets in selected_wallets.items():
         json_file_path = os.path.join(
             f"Data/chunks/{service}/3_months", f"{period}.json"
@@ -304,10 +296,6 @@ if __name__ == "__main__":
             data = json.load(f)
         period_results = []
         for wallet_id in wallets:
-            # controllo se il wallet è già stato analizzato
-            # if check_if_wallet_is_analyzed(wallet_id, results_folder):
-            #   print(f"Wallet {wallet_id} already analyzed. Skipping.")
-            #   continue
             txs_wallet = load_wallet_bets(wallet_id, data)
             if not txs_wallet:
                 print(f"Wallet {wallet_id} has no transactions in {period}. Skipping.")

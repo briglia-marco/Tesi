@@ -151,6 +151,12 @@ def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
 def load_chunk_transactions(chunk_path):
     """
     Load transactions from a JSON file.
+
+    Args:
+        chunk_path (str): Path to the chunk file.
+
+    Returns:
+        list: List of transactions.
     """
     if not os.path.exists(chunk_path):
         print(f"Chunk file {chunk_path} does not exist.")
@@ -165,6 +171,13 @@ def load_chunk_transactions(chunk_path):
 def get_wallet_transactions(wallet_id, transactions):
     """
     Get transactions for a specific wallet from the list of transactions.
+
+    Args:
+        wallet_id (str): The wallet ID to filter transactions.
+        transactions (list): List of all transactions.
+
+    Returns:
+        list: List of transactions for the specified wallet.
     """
     wallet_txs = []
     for tx in transactions:
@@ -190,6 +203,12 @@ def get_wallet_transactions(wallet_id, transactions):
 def compute_time_differences(wallet_txs):
     """
     Compute time differences between transactions for a specific wallet.
+
+    Args:
+        wallet_txs (list): List of transactions for a specific wallet.
+
+    Returns:
+        list: List of time differences in seconds between consecutive transactions.
     """
     if not wallet_txs:
         return []
@@ -213,6 +232,12 @@ def compute_time_differences(wallet_txs):
 def compute_time_statistics(time_diffs):
     """
     Compute time variance statistics for a specific wallet in a given chunk.
+
+    Args:
+        time_diffs (list): List of time differences in seconds between consecutive transactions.
+
+    Returns:
+        dict: Dictionary containing time variance statistics.
     """
     if not time_diffs:
         return None
@@ -234,6 +259,11 @@ def compute_time_statistics(time_diffs):
 def update_dataframe_with_stats(dataframe, wallet_id, stats):
     """
     Update the DataFrame with the calculated statistics.
+
+    Args:
+        dataframe (pd.DataFrame): The DataFrame to update.
+        wallet_id (str): The wallet ID to update.
+        stats (dict): Dictionary containing the statistics to add.
     """
     if stats is None:
         return
@@ -252,9 +282,6 @@ def calculate_time_variance(wallet_id, transactions):
         wallet_id (str): The wallet ID to analyze.
         directory_input (str): Directory containing the chunk files.
         chunk_to_process (str): The specific chunk file to process.
-
-    Returns:
-        None
     """
     wallet_txs = get_wallet_transactions(wallet_id, transactions)
     if not wallet_txs:
@@ -281,9 +308,6 @@ def calculate_chunk_global_metrics(chunk_file_path, global_metrics_df, chunk_fil
     Args:
         chunk_file_path (str): Path to the chunk file.
         global_metrics_df (pd.DataFrame): DataFrame to store global metrics.
-
-    Returns:
-        None
     """
     if not os.path.exists(chunk_file_path):
         print(f"Chunk file {chunk_file_path} does not exist.")

@@ -52,9 +52,6 @@ def build_wallet_graph_for_chunk(
         service_node (str): The service node to analyze.
         chunk_to_process (str): The specific chunk file to process.
         output_dir (str): Directory to save the graph data.
-
-    Returns:
-        None
     """
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -119,9 +116,6 @@ def export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process):
         G (networkx.Graph): The graph to export.
         output_dir (str): Directory to save the exported graph data.
         chunk_to_process (str): The specific chunk file being processed.
-
-    Returns:
-        None
     """
     nodes_data = []
     edges_data = []
@@ -167,9 +161,6 @@ def build_txs_graph_for_chunk(
         wallet_id (str): The wallet ID to analyze.
         chunk_to_process (str): The specific chunk file to process.
         output_dir (str): Directory to save the graph data.
-
-    Returns:
-        None
     """
 
     if not os.path.exists(output_dir):
@@ -260,9 +251,6 @@ def export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process):
         output_dir (str): Directory to save the exported graph data.
         wallet_id (str): The wallet ID being processed.
         chunk_to_process (str): The specific chunk file being processed.
-
-    Returns:
-        None
     """
     pass
     nodes_data = []

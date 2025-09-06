@@ -1,7 +1,5 @@
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
-import os
 
 # _______________________________________________________________________________________________________________________
 
@@ -12,9 +10,6 @@ def plot_wallet_metrics(dataframe):
 
     Args:
         dataframe (pd.DataFrame): DataFrame containing wallet transaction data.
-
-    Returns:
-        None
     """
     plot_top_active_wallets(dataframe)
     plot_mean_time_diff_distribution(dataframe)
@@ -30,9 +25,6 @@ def plot_chunk_global_metrics(dataframe):
 
     Args:
         dataframe (pd.DataFrame): DataFrame containing global metrics data.
-
-    Returns:
-        None
     """
     dataframe.sort_values(by="chunk", inplace=True)
     plot_total_transactions(dataframe)
@@ -48,6 +40,9 @@ def plot_chunk_global_metrics(dataframe):
 def plot_total_transactions(df):
     """
     Plot the total number of transactions over different periods.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing total transactions data.
     """
     plt.figure(figsize=(12, 6))
     sns.barplot(
@@ -66,9 +61,15 @@ def plot_total_transactions(df):
     plt.show()
 
 
+# _______________________________________________________________________________________________________________________
+
+
 def plot_unique_wallets(df):
     """
     Plot the number of unique wallets over different periods.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing unique wallets data.
     """
     plt.figure(figsize=(12, 6))
     sns.barplot(
@@ -87,9 +88,15 @@ def plot_unique_wallets(df):
     plt.show()
 
 
+# _______________________________________________________________________________________________________________________
+
+
 def plot_total_btc_received(df):
     """
     Plot the total BTC received over different periods.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing total BTC received data.
     """
     plt.figure(figsize=(12, 6))
     sns.barplot(
@@ -108,9 +115,15 @@ def plot_total_btc_received(df):
     plt.show()
 
 
+# _______________________________________________________________________________________________________________________
+
+
 def plot_net_balance_stats(df):
     """
     Plot the mean and variance of net balance over time.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing net balance statistics.
     """
     plt.figure(figsize=(12, 6))
     sns.lineplot(
@@ -132,9 +145,15 @@ def plot_net_balance_stats(df):
     plt.show()
 
 
+# _______________________________________________________________________________________________________________________
+
+
 def plot_time_variance_stats(df):
     """
     Plot the time variance statistics over time.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing time variance statistics.
     """
     plt.figure(figsize=(12, 6))
     sns.lineplot(
@@ -166,6 +185,9 @@ def plot_time_variance_stats(df):
 def plot_time_variance_distribution(df):
     """
     Plot the distribution of time variance.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing time variance data.
     """
     plt.figure(figsize=(10, 6))
     plt.hist(df["time_variance"], bins=30, color="blue", alpha=0.7)
@@ -176,9 +198,16 @@ def plot_time_variance_distribution(df):
     plt.show()
 
 
+# _______________________________________________________________________________________________________________________
+
+
 def plot_top_active_wallets(df, top_n=20):
     """
     Plot the top N active wallets based on transaction counts.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing wallet activity data.
+        top_n (int): Number of top wallets to display.
     """
     top_wallets = df.head(top_n)
 
@@ -195,9 +224,15 @@ def plot_top_active_wallets(df, top_n=20):
     plt.show()
 
 
+# _______________________________________________________________________________________________________________________
+
+
 def plot_mean_time_diff_distribution(df):
     """
     Plot the distribution of mean time differences between transactions.
+
+    Args:
+        df (pd.DataFrame): DataFrame containing mean time difference data.
     """
     plt.figure(figsize=(10, 6))
     plt.hist(df["mean_time_diff"], bins=30, color="orange", alpha=0.7)

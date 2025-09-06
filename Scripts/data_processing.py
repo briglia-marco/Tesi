@@ -17,9 +17,6 @@ def download_wallet_addresses(wallet_ids, directory_raw_addresses):
     Args:
         wallet_ids (list): List of wallet IDs to fetch addresses for.
         directory_raw_addresses (str): Directory where the address JSON files will be saved.
-
-    Returns:
-        None
     """
     for wallet_id in wallet_ids:
         address_file = f"{directory_raw_addresses}/{wallet_id}_addresses_1.json"
@@ -39,9 +36,6 @@ def download_wallet_transactions(wallet_ids, directory_raw_transactions):
     Args:
         wallet_ids (list): List of wallet IDs to fetch transactions for.
         directory_raw_transactions (str): Directory where the transaction JSON files will be saved.
-
-    Returns:
-        None
     """
     for wallet_id in wallet_ids:
         tx_file = f"{directory_raw_transactions}/{wallet_id}_transactions_1.json"
@@ -68,9 +62,6 @@ def merge_wallet_json_files(
         output_suffix (str): Suffix for the output file name.
         data_field (str): The field in the JSON to merge (e.g., "addresses" or "transactions").
         count_field (str): The field to count items in the JSON.
-
-    Returns:
-        None
     """
     merged_data = {
         "found": True,
@@ -132,9 +123,6 @@ def split_json_file(
         data_field (str): Key name of the list in the JSON (e.g. 'addresses' or 'transactions').
         chunk_size (int, optional): Number of objects per file. Default is 100,000.
         suffix (str, optional): Suffix for the output file ('addresses' or 'transactions').
-
-    Returns:
-        None
     """
     input_path = os.path.join(directory_input, f"{wallet_id}_{suffix}.json")
     with open(input_path, "r") as f:
@@ -180,9 +168,6 @@ def split_all_wallet_files(
         dir_processed_transactions (str): Directory with merged transactions JSON files.
         dir_raw_addresses (str): Output directory for split addresses JSON files.
         dir_raw_transactions (str): Output directory for split transactions JSON files.
-
-    Returns:
-        None
     """
     for wallet_id in wallet_ids:
         print(f"\nSplitting addresses for {wallet_id}...")

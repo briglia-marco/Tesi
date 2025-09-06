@@ -16,9 +16,6 @@ def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
         wallet_id (str): The wallet ID associated with the transactions.
         file_index (int): The index for the output file.
         output_dir (str): The directory where the JSON file will be saved.
-
-    Returns:
-        None
     """
     file_path = os.path.join(output_dir, f"{wallet_id}_transactions_{file_index}.json")
     with open(file_path, "w") as f:
@@ -163,9 +160,6 @@ def save_addresses_chunk(addresses, wallet_id, label, file_index, output_dir):
         label (str): The label associated with the wallet.
         file_index (int): The index for the output file.
         output_dir (str): The directory where the JSON file will be saved.
-
-    Returns:
-        None
     """
     chunk_data = {
         "found": True,
@@ -190,9 +184,6 @@ def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
     Args:
         wallet_id (str): The wallet ID to fetch addresses for.
         output_dir (str): The directory where the JSON files will be saved.
-
-    Returns:
-        None
     """
     base_url = "https://www.walletexplorer.com/api/1/wallet-addresses"
     all_addresses = []
