@@ -84,12 +84,12 @@ def summarize_wallet_behavior(wallet_id, txs_wallet, time_diffs_series, rolling_
     long_streaks = groups.sum().sort_values(ascending=False) # Get the longest streaks of low variance
 
     return {
-        "wallet_id": wallet_id,
-        "n_tx": len(txs_wallet),
-        "percent_low_var_windows": (rolling_var < low_var_threshold).sum() / len(rolling_var),
-        "longest_low_var_streak": long_streaks.iloc[0] if not long_streaks.empty else 0,
-        "mean_time_diff": time_diffs_series.mean(),
-        "std_time_diff": time_diffs_series.std()
+        "wallet_id": str(wallet_id),
+        "n_tx": int(len(txs_wallet)),
+        "percent_low_var_windows": round(float((rolling_var < low_var_threshold).sum() / len(rolling_var)), 2),
+        "longest_low_var_streak": int(long_streaks.iloc[0]) if not long_streaks.empty else 0,
+        "mean_time_diff": round(float(time_diffs_series.mean()), 2),
+        "std_time_diff": round(float(time_diffs_series.std()), 2)
     }
     
 #_______________________________________________________________________________________________________________________
@@ -129,7 +129,7 @@ def plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, low_var_threshold
 
     os.makedirs(f"Data/chunks/{service}/plots", exist_ok=True)
     plt.savefig(f"Data/chunks/{service}/plots/rolling_metrics_{wallet_id}.png")
-    
+    plt.close()
     #plt.tight_layout()
     #plt.show()
     

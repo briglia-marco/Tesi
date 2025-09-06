@@ -7,6 +7,7 @@ from Scripts.graph import *
 from Scripts.metrics import *
 from Scripts.plot import *
 from Scripts.rolling_analisys import *
+from Scripts.gambling_analysis import *
 import os
 
 if __name__ == "__main__":
@@ -182,7 +183,7 @@ if __name__ == "__main__":
 
     metrics_dir = f"Data/chunks/{service}/xlsx/chunk_metrics"
     json_dir = f"Data/chunks/{service}/3_months"
-    
+
     window_size = 10
     var_threshold = 10
 
@@ -196,10 +197,35 @@ if __name__ == "__main__":
         
         metrics_path = os.path.join(metrics_dir, metrics_file)
 
-        wallet_ids = get_wallets_meeting_criteria(metrics_path, min_tx=min_transactions_for_wallet_to_analyze)
+        log_dir = f"Data/chunks/{service}/logs"
+        os.makedirs(log_dir, exist_ok=True)
+        log_file_path = os.path.join(log_dir, f"{metrics_file.split('.')[0]}.json")
 
-        log_report = []
-        
+        skip_analysis = False
+        if os.path.exists(log_file_path):
+            try:
+                with open(log_file_path, "r") as log_file:
+                    existing = json.load(log_file)
+                    logged_min_tx = existing.get("min_transactions")
+                    if logged_min_tx == min_transactions_for_wallet_to_analyze:
+                        print(f" -> Log già presente e valido, salto analisi di {metrics_file}")
+                        skip_analysis = True
+            except json.JSONDecodeError:
+                print(f" -> File {log_file_path} non valido, rifaccio analisi")
+
+        if skip_analysis:
+            continue
+
+        wallet_ids = get_wallets_meeting_criteria(
+            metrics_path, 
+            min_tx=min_transactions_for_wallet_to_analyze
+        )
+
+        log_report = {
+            "min_transactions": min_transactions_for_wallet_to_analyze,
+            "wallets": []
+        }
+
         for wallet_id in wallet_ids:
             summary = analyze_wallet(
                 period_metrics_file=metrics_file,
@@ -210,15 +236,11 @@ if __name__ == "__main__":
                 window_size=window_size,
                 var_threshold=var_threshold
             )
-            for key, value in summary.items():
-                log_report.append(f"{key}: {value}\n")
-            log_report.append("\n" + "="*50 + "\n")
+            log_report["wallets"].append(summary)
 
-        os.makedirs(f"Data/chunks/{service}/logs", exist_ok=True)
-        log_file_path = f"Data/chunks/{service}/logs/{metrics_file.split('.')[0]}.log"
-        if log_report:
+        if log_report["wallets"]:
             with open(log_file_path, "w") as log_file:
-                log_file.writelines(log_report)
+                json.dump(log_report, log_file, indent=4)
         
 #_______________________________________________________________________________________________________________________
 
@@ -229,4 +251,19 @@ if __name__ == "__main__":
     # prendere tutte le transazioni di quel wallet in ordine e le analizza per identificare
     # schemi di gioco d'azzardo consecutivo come Martingale e D'Alembert
     
+    logs_folder = f"Data/chunks/{service}/logs"
+    percent_low_var_windows_treshold = 0.50
+    selected_wallets = {}
+
+    for log_file in os.listdir(logs_folder):
+        if not log_file.endswith(".json"):
+            continue
+        log_path = os.path.join(logs_folder, log_file)
+        with open(log_path, "r") as f:
+            data = json.load(f)
+        df_log = pd.DataFrame(data["wallets"])
+        df_log = df_log[df_log["percent_low_var_windows"] >= percent_low_var_windows_treshold]
+        selected_wallets[f"{log_file.split('.')[0]}"] = df_log["wallet_id"].tolist()
+
     
+
