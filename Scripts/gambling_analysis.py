@@ -43,11 +43,11 @@ def detect_martingale(df_txs_wallet, tol=0.05, min_prev_amount=0.00001):
     martingale_max_streak = max_consecutive_true(martingale_mask)
 
     # Boolean flag indicating potential Martingale strategy
-    martingale_flag = martingale_ratio > 0.5  # Threshold can be adjusted
+    martingale_flag = martingale_ratio > 0.3  # Threshold can be adjusted
 
     return {
-        "martingale_ratio": martingale_ratio,
-        "martingale_max_streak": martingale_max_streak,
+        "martingale_ratio": round(martingale_ratio, 2),
+        "martingale_max_streak": round(martingale_max_streak, 2),
         "martingale_flag": martingale_flag,
     }
 
@@ -94,11 +94,11 @@ def detect_dAlembert(df_txs_wallet, tol=0.01, min_prev_amount=1e-12):
     dalembert_max_streak = max_consecutive_true(dalembert_mask)
 
     # Boolean flag indicating potential d'Alembert strategy
-    dalembert_flag = dalembert_ratio > 0.5  # Threshold can be adjusted
+    dalembert_flag = dalembert_ratio > 0.3  # Threshold can be adjusted
 
     return {
-        "dalembert_ratio": dalembert_ratio,
-        "dalembert_max_streak": dalembert_max_streak,
+        "dalembert_ratio": round(dalembert_ratio, 2),
+        "dalembert_max_streak": round(dalembert_max_streak, 2),
         "dalembert_flag": dalembert_flag,
     }
 
@@ -143,11 +143,11 @@ def detect_flat_betting(df_txs_wallet, tol=0.01):
     flat_max_streak = max_consecutive_true(flat_mask)
 
     # Boolean flag indicating potential flat betting strategy
-    flat_flag = flat_ratio > 0.5  # Threshold can be adjusted
+    flat_flag = flat_ratio > 0.3  # Threshold can be adjusted
 
     return {
-        "flat_ratio": flat_ratio,
-        "flat_max_streak": flat_max_streak,
+        "flat_ratio": round(flat_ratio, 2),
+        "flat_max_streak": round(flat_max_streak, 2),
         "flat_flag": flat_flag,
     }
 
