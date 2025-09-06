@@ -11,8 +11,8 @@ from Scripts.gambling_analysis import *
 import os
 
 if __name__ == "__main__":
-    
-# DOWNLOAD DATA
+
+    # DOWNLOAD DATA
 
     directory_raw_addresses = "Data/raw/addresses"
     directory_raw_transactions = "Data/raw/transactions"
@@ -25,7 +25,7 @@ if __name__ == "__main__":
         download_first_100_addresses(
             directory_addresses=directory_processed_100_addresses,
             get_wallet_ids=get_wallet_ids,
-            fetch_first_100_addresses=fetch_first_100_addresses
+            fetch_first_100_addresses=fetch_first_100_addresses,
         )
     else:
         print("First 100 addresses are already downloaded.")
@@ -37,34 +37,44 @@ if __name__ == "__main__":
         )
     print("Wallet info processed.")
 
-#______________________________________________________________________________________________________________________
-    
-# MERGE JSON FILES
+    # ______________________________________________________________________________________________________________________
 
-    w1, w2, w3, w4, w5 = 0.35, 0.03, 0.25, 0.35, 0.02  # weights for total transactions, total addresses, transactions per address, first 100 transactions/total transactions, notoriety
-    
+    # MERGE JSON FILES
+
+    w1, w2, w3, w4, w5 = (
+        0.35,
+        0.03,
+        0.25,
+        0.35,
+        0.02,
+    )  # weights for total transactions, total addresses, transactions per address, first 100 transactions/total transactions, notoriety
+
     known_services = [
-    "SatoshiDice.com",
-    "999Dice.com",
-    "PrimeDice.com",
-    "Betcoin.ag",
-    "BitZino.com",
-    "FortuneJack.com",
-    "CloudBet.com",
-    "BitcoinVideoCasino.com",
-    "NitrogenSports.eu",
-    "SatoshiDice.com-original",
-    "Coinroll.com",
-    "777Coin.com",
-    "Crypto-Games.net",
-    "SwCPoker.eu"
+        "SatoshiDice.com",
+        "999Dice.com",
+        "PrimeDice.com",
+        "Betcoin.ag",
+        "BitZino.com",
+        "FortuneJack.com",
+        "CloudBet.com",
+        "BitcoinVideoCasino.com",
+        "NitrogenSports.eu",
+        "SatoshiDice.com-original",
+        "Coinroll.com",
+        "777Coin.com",
+        "Crypto-Games.net",
+        "SwCPoker.eu",
     ]
-    
+
     df_wallets = process_wallet_dataframe(
         wallets_info_path="Data/processed/info/wallets_info.json",
         directory_addresses=directory_processed_100_addresses,
         known_services=known_services,
-        w1=w1, w2=w2, w3=w3, w4=w4, w5=w5
+        w1=w1,
+        w2=w2,
+        w3=w3,
+        w4=w4,
+        w5=w5,
     )
 
     wallet_ids = df_wallets["wallet_id"].iloc[:15].tolist()
@@ -72,9 +82,17 @@ if __name__ == "__main__":
     # download_wallet_addresses(wallet_ids, directory_raw_addresses)
     # download_wallet_transactions(wallet_ids, directory_raw_transactions)
 
-    existing_merged_addresses = set(os.listdir(directory_processed_addr)) if os.path.exists(directory_processed_addr) else set()
-    existing_merged_transactions = set(os.listdir(directory_processed_txs)) if os.path.exists(directory_processed_txs) else set()
-    
+    existing_merged_addresses = (
+        set(os.listdir(directory_processed_addr))
+        if os.path.exists(directory_processed_addr)
+        else set()
+    )
+    existing_merged_transactions = (
+        set(os.listdir(directory_processed_txs))
+        if os.path.exists(directory_processed_txs)
+        else set()
+    )
+
     for wallet_id in wallet_ids:
         merged_address_file = f"{wallet_id}_addresses.json"
         merged_transaction_file = f"{wallet_id}_transactions.json"
@@ -86,7 +104,7 @@ if __name__ == "__main__":
                 directory_output=directory_processed_addr,
                 output_suffix="addresses",
                 data_field="addresses",
-                count_field="addresses_count"
+                count_field="addresses_count",
             )
 
         if not merged_transaction_file in existing_merged_transactions:
@@ -96,32 +114,32 @@ if __name__ == "__main__":
                 directory_output=directory_processed_txs,
                 output_suffix="transactions",
                 data_field="transactions",
-                count_field="transactions_count"
+                count_field="transactions_count",
             )
-            
-    #df_wallets = df_wallets[1:15]
-    #df_wallets = calculate_wallet_activity(df_wallets, directory_processed_txs)
+
+    # df_wallets = df_wallets[1:15]
+    # df_wallets = calculate_wallet_activity(df_wallets, directory_processed_txs)
 
     print("All JSON files merged.")
-    
-#_______________________________________________________________________________________________________________________
 
-# CHUNKING DATA
+    # _______________________________________________________________________________________________________________________
 
-
-
-
-
+    # CHUNKING DATA
 
     service = "SatoshiDice.com-original"  # Example service, can be changed
-    transactions_for_chunk_threshold = 100000  # Minimum number of transactions to consider for chunking
+    transactions_for_chunk_threshold = (
+        100000  # Minimum number of transactions to consider for chunking
+    )
     min_transactions_for_wallet_to_analyze = 1000  # modify this threshold as needed
-    # SatoshiDice.com-original 100000, 5000
+    # SatoshiDice.com-original 100000, 1000
     # BitZillions.com, 15000, 1000
-    # YABTCL.com different distribution patterns 1000, 100
 
     intervals = [3, 6, 12, 24]  # months
-    existing_chunk_files = set(os.listdir(f"Data/chunks/{service}")) if os.path.exists(f"Data/chunks/{service}") else set()
+    existing_chunk_files = (
+        set(os.listdir(f"Data/chunks/{service}"))
+        if os.path.exists(f"Data/chunks/{service}")
+        else set()
+    )
 
     for interval in intervals:
         if not f"{interval}_months" in existing_chunk_files:
@@ -129,33 +147,39 @@ if __name__ == "__main__":
                 wallet_id=service,
                 input_dir="Data/raw/transactions",
                 output_base_dir="Data/chunks",
-                intervals_months=[interval]
+                intervals_months=[interval],
             )
-          
+
     # UNCOMMENT TO GENERATE CHUNKS REPORTS IN XLSX FORMAT
-    
+
     # generate_chunk_transaction_reports(
     #     wallet_id="SatoshiDice.com-original",
     #     base_chunk_dir="Data/chunks/SatoshiDice.com-original",
     #     intervals=intervals,
     #     output_dir="Data/chunks/SatoshiDice.com-original/xlsx"
     # )
-#_______________________________________________________________________________________________________________________
+    # _______________________________________________________________________________________________________________________
 
-# GRAPH AND METRICS FOR CHUNKS
+    # GRAPH AND METRICS FOR CHUNKS
 
     directory_chunks = f"Data/chunks/{service}/3_months"
     chunks_to_process = pd.read_excel(f"Data/chunks/{service}/xlsx/3_months.xlsx")
-    chunks_to_process = chunks_to_process[chunks_to_process["count"] > transactions_for_chunk_threshold] # modify this threshold as needed
+    chunks_to_process = chunks_to_process[
+        chunks_to_process["count"] > transactions_for_chunk_threshold
+    ]  # modify this threshold as needed
 
     for chunk_to_process in chunks_to_process["chunk"].tolist():
         print(f"Processing chunk: {chunk_to_process}")
         build_graphs_for_wallet(chunk_to_process, directory_chunks, service)
-        analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir=f"Data/chunks/{service}/xlsx/chunk_metrics")
+        analyze_chunk_metrics(
+            chunk_to_process,
+            directory_chunks,
+            output_dir=f"Data/chunks/{service}/xlsx/chunk_metrics",
+        )
 
-#________________________________________________________________________________________________________________________
+    # ________________________________________________________________________________________________________________________
 
-# CHUNK GLOBAL METRICS
+    # CHUNK GLOBAL METRICS
 
     chunk_metrics_directory = f"Data/chunks/{service}/xlsx/chunk_metrics"
     chunk_metrics_files = os.listdir(chunk_metrics_directory)
@@ -167,19 +191,18 @@ if __name__ == "__main__":
         chunk_global_metrics_df = calculate_chunk_global_metrics(
             chunk_file_path=os.path.join(chunk_metrics_directory, chunk_file),
             global_metrics_df=chunk_global_metrics_df,
-            chunk_file_name=chunk_file_name
+            chunk_file_name=chunk_file_name,
         )
 
     chunk_global_metrics_df.to_excel(
-        f"Data/chunks/{service}/xlsx/chunk_global_metrics.xlsx",
-        index=False
+        f"Data/chunks/{service}/xlsx/chunk_global_metrics.xlsx", index=False
     )
-    
+
     # plot_chunk_global_metrics(chunk_global_metrics_df)
 
-#________________________________________________________________________________________________________________________
+    # ________________________________________________________________________________________________________________________
 
-# ROLLING WINDOW ANALYSIS
+    # ROLLING WINDOW ANALYSIS
 
     metrics_dir = f"Data/chunks/{service}/xlsx/chunk_metrics"
     json_dir = f"Data/chunks/{service}/3_months"
@@ -188,13 +211,14 @@ if __name__ == "__main__":
     var_threshold = 10
 
     all_metrics_files = [
-        f for f in os.listdir(metrics_dir)
+        f
+        for f in os.listdir(metrics_dir)
         if f.endswith(".xlsx") and "json_metrics" in f
     ]
 
     for metrics_file in all_metrics_files:
         print(f"\nAnalisi periodo: {metrics_file}")
-        
+
         metrics_path = os.path.join(metrics_dir, metrics_file)
 
         log_dir = f"Data/chunks/{service}/logs"
@@ -208,22 +232,21 @@ if __name__ == "__main__":
                     existing = json.load(log_file)
                     logged_min_tx = existing.get("min_transactions")
                     if logged_min_tx == min_transactions_for_wallet_to_analyze:
-                        print(f" -> Log già presente e valido, salto analisi di {metrics_file}")
+                        print(f" -> Log already present {metrics_file}")
                         skip_analysis = True
             except json.JSONDecodeError:
-                print(f" -> File {log_file_path} non valido, rifaccio analisi")
+                print(f" -> File {log_file_path} not valid, redoing analysis")
 
         if skip_analysis:
             continue
 
         wallet_ids = get_wallets_meeting_criteria(
-            metrics_path, 
-            min_tx=min_transactions_for_wallet_to_analyze
+            metrics_path, min_tx=min_transactions_for_wallet_to_analyze
         )
 
         log_report = {
             "min_transactions": min_transactions_for_wallet_to_analyze,
-            "wallets": []
+            "wallets": [],
         }
 
         for wallet_id in wallet_ids:
@@ -234,64 +257,75 @@ if __name__ == "__main__":
                 service=service,
                 wallet_id_override=wallet_id,
                 window_size=window_size,
-                var_threshold=var_threshold
+                var_threshold=var_threshold,
             )
-            log_report["wallets"].append(summary)
+            if summary.get("n_tx", 0) >= min_transactions_for_wallet_to_analyze:
+                log_report["wallets"].append(summary)
 
         if log_report["wallets"]:
             with open(log_file_path, "w") as log_file:
                 json.dump(log_report, log_file, indent=4)
-        
-#_______________________________________________________________________________________________________________________
 
-# # DETECTION OF GAMBLING PATTERN
+    # _______________________________________________________________________________________________________________________
 
-#     # algoritmo che prende solo i wallet con una percentuale abbastanza alta di low variance
-#     # dai file di log (scegliere il treshold minimo significativo)
-#     # prendere tutte le transazioni di quel wallet in ordine e le analizza per identificare
-#     # schemi di gioco d'azzardo consecutivo come Martingale e D'Alembert
-    
-#     logs_folder = f"Data/chunks/{service}/logs"
-#     results_folder = f"Data/Results/{service}"
-#     percent_low_var_windows_treshold = 0.50
-#     selected_wallets = {}
+    # DETECTION OF GAMBLING PATTERN
 
-#     # scansione dei file di log per selezionare i wallet con alta percentuale di low variance
-#     for log_file in os.listdir(logs_folder):
-#         if not log_file.endswith(".json"):
-#             continue
-#         log_path = os.path.join(logs_folder, log_file)
-#         with open(log_path, "r") as f:
-#             data = json.load(f)
-#         df_log = pd.DataFrame(data["wallets"])
-#         df_log = df_log[df_log["percent_low_var_windows"] >= percent_low_var_windows_treshold]
-#         selected_wallets[f"{log_file.split('.')[0]}"] = df_log["wallet_id"].tolist()
+    # algoritmo che prende solo i wallet con una percentuale abbastanza alta di low variance
+    # dai file di log (scegliere il treshold minimo significativo)
+    # prendere tutte le transazioni di quel wallet in ordine e le analizza per identificare
+    # schemi di gioco d'azzardo consecutivo come Martingale e D'Alembert
 
-#     # logica per il recupero delle transazioni dai file json dei chunk
-#     # prendo il periodo dalla chiave del dizionario e scanno il file corrispondente 
-#     # per ogni wallet della lista, recupero le transazioni in ordine
-#     for period, wallets in selected_wallets.items():
-#         json_file_path = os.path.join(f"Data/chunks/{service}/3_months", f"{period}.json")
-#         with open(json_file_path, "r") as f:
-#             data = json.load(f)
-#         for wallet_id in wallets:
-#             # controllo se il wallet è già stato analizzato
-#             # if check_if_wallet_is_analyzed(wallet_id, results_folder):
-#             #   print(f"Wallet {wallet_id} already analyzed. Skipping.")
-#             #   continue
-#             txs_wallet = load_wallet_bets(wallet_id, data)
-#             if not txs_wallet:
-#                 print(f"Wallet {wallet_id} has no transactions in {period}. Skipping.")
-#                 continue
-#             martingale_results = detect_martingale(txs_wallet)
-#             dAlembert_results = detect_dAlembert(txs_wallet)
-            
-            
+    logs_folder = f"Data/chunks/{service}/logs"
+    results_folder = f"Data/Results/{service}"
+    percent_low_var_windows_treshold = 0.50
+    selected_wallets = {}
 
-#     # per ogni wallet si controlla se è già stato analizzato, se no
-#     # analisi completa di entrambi gli algoritmi di gambling
-    
-#     # metodo di salvataggio dei risultati dell'analisi
-    
-    
+    # scansione dei file di log per selezionare i wallet con alta percentuale di low variance
+    for log_file in os.listdir(logs_folder):
+        if not log_file.endswith(".json"):
+            continue
+        log_path = os.path.join(logs_folder, log_file)
+        with open(log_path, "r") as f:
+            data = json.load(f)
+        df_log = pd.DataFrame(data["wallets"])
+        df_log = df_log[
+            df_log["percent_low_var_windows"] >= percent_low_var_windows_treshold
+        ]
+        selected_wallets[f"{log_file.split('.')[0]}"] = df_log["wallet_id"].tolist()
 
+    # logica per il recupero delle transazioni dai file json dei chunk
+    # prendo il periodo dalla chiave del dizionario e scanno il file corrispondente
+    # per ogni wallet della lista, recupero le transazioni in ordine
+    for period, wallets in selected_wallets.items():
+        json_file_path = os.path.join(
+            f"Data/chunks/{service}/3_months", f"{period}.json"
+        )
+        with open(json_file_path, "r") as f:
+            data = json.load(f)
+        period_results = []
+        for wallet_id in wallets:
+            # controllo se il wallet è già stato analizzato
+            # if check_if_wallet_is_analyzed(wallet_id, results_folder):
+            #   print(f"Wallet {wallet_id} already analyzed. Skipping.")
+            #   continue
+            txs_wallet = load_wallet_bets(wallet_id, data)
+            if not txs_wallet:
+                print(f"Wallet {wallet_id} has no transactions in {period}. Skipping.")
+                continue
+            df_txs_wallet = pd.DataFrame(txs_wallet)
+            martingale_results = detect_martingale(df_txs_wallet)
+            dAlembert_results = detect_dAlembert(df_txs_wallet)
+            flat_results = detect_flat_betting(df_txs_wallet)
+            combined_results = {
+                "wallet_id": wallet_id,
+                "n_tx": len(txs_wallet),
+                **martingale_results,
+                **dAlembert_results,
+                **flat_results,
+            }
+            period_results.append(combined_results)
+
+        results_path = os.path.join(results_folder, f"{period}_gambling_analysis.json")
+        os.makedirs(results_folder, exist_ok=True)
+        with open(results_path, "w") as f:
+            json.dump(period_results, f, indent=4)

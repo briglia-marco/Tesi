@@ -6,7 +6,8 @@ from Scripts.ranking import *
 from tqdm import tqdm
 from datetime import datetime
 
-#_______________________________________________________________________________________________________________________
+# _______________________________________________________________________________________________________________________
+
 
 def download_wallet_addresses(wallet_ids, directory_raw_addresses):
     """
@@ -26,7 +27,9 @@ def download_wallet_addresses(wallet_ids, directory_raw_addresses):
             print(f"Downloading all addresses for {wallet_id}...")
             fetch_all_addresses(wallet_id, directory_raw_addresses)
 
-#________________________________________________________________________________________________________________________
+
+# ________________________________________________________________________________________________________________________
+
 
 def download_wallet_transactions(wallet_ids, directory_raw_transactions):
     """
@@ -45,15 +48,19 @@ def download_wallet_transactions(wallet_ids, directory_raw_transactions):
         if not os.path.exists(tx_file):
             print(f"Downloading all transactions for {wallet_id}...")
             fetch_wallet_transactions(wallet_id, directory_raw_transactions)
-            
-#_______________________________________________________________________________________________________________________
 
-def merge_wallet_json_files(wallet_id, directory_input, directory_output, output_suffix, data_field, count_field):
+
+# _______________________________________________________________________________________________________________________
+
+
+def merge_wallet_json_files(
+    wallet_id, directory_input, directory_output, output_suffix, data_field, count_field
+):
     """
     Merge all JSON files for a given wallet ID containing either addresses or transactions
     into a single JSON file. The data_field and count_field are customizable.
     Supports both dict-based and pure list JSON files.
-    
+
     Args:
         wallet_id (str): The wallet ID to merge files for.
         directory_input (str): Directory containing the input JSON files.
@@ -61,7 +68,7 @@ def merge_wallet_json_files(wallet_id, directory_input, directory_output, output
         output_suffix (str): Suffix for the output file name.
         data_field (str): The field in the JSON to merge (e.g., "addresses" or "transactions").
         count_field (str): The field to count items in the JSON.
-        
+
     Returns:
         None
     """
@@ -70,10 +77,14 @@ def merge_wallet_json_files(wallet_id, directory_input, directory_output, output
         "label": wallet_id,
         "wallet_id": wallet_id,
         count_field: 0,
-        data_field: []
+        data_field: [],
     }
 
-    files = [f for f in os.listdir(directory_input) if f.startswith(wallet_id) and f.endswith(".json")]
+    files = [
+        f
+        for f in os.listdir(directory_input)
+        if f.startswith(wallet_id) and f.endswith(".json")
+    ]
     files.sort()
 
     for file_name in files:
@@ -98,9 +109,18 @@ def merge_wallet_json_files(wallet_id, directory_input, directory_output, output
 
     print(f"Merged file saved to {output_path}")
 
-#_______________________________________________________________________________________________________________________
 
-def split_json_file(wallet_id, directory_input, directory_output, data_field, chunk_size=100000, suffix="addresses"):
+# _______________________________________________________________________________________________________________________
+
+
+def split_json_file(
+    wallet_id,
+    directory_input,
+    directory_output,
+    data_field,
+    chunk_size=100000,
+    suffix="addresses",
+):
     """
     Split a merged JSON file containing either addresses or transactions into multiple JSON files
     each containing up to chunk_size objects.
@@ -126,8 +146,10 @@ def split_json_file(wallet_id, directory_input, directory_output, data_field, ch
 
     file_index = 1
     for i in range(0, total_items, chunk_size):
-        chunk = items[i:i + chunk_size]
-        output_path = os.path.join(directory_output, f"{wallet_id}_{suffix}_{file_index}.json")
+        chunk = items[i : i + chunk_size]
+        output_path = os.path.join(
+            directory_output, f"{wallet_id}_{suffix}_{file_index}.json"
+        )
 
         with open(output_path, "w") as f_out:
             json.dump(chunk, f_out, indent=4)
@@ -136,10 +158,18 @@ def split_json_file(wallet_id, directory_input, directory_output, data_field, ch
         file_index += 1
 
     print(f"Splitting complete for {wallet_id} ({suffix})")
-    
-#_______________________________________________________________________________________________________________________
 
-def split_all_wallet_files(wallet_ids, dir_processed_addresses, dir_processed_transactions, dir_raw_addresses, dir_raw_transactions):
+
+# _______________________________________________________________________________________________________________________
+
+
+def split_all_wallet_files(
+    wallet_ids,
+    dir_processed_addresses,
+    dir_processed_transactions,
+    dir_raw_addresses,
+    dir_raw_transactions,
+):
     """
     Split all merged JSON files for a list of wallet IDs into chunks of 100,000 objects,
     for both addresses and transactions.
@@ -162,7 +192,7 @@ def split_all_wallet_files(wallet_ids, dir_processed_addresses, dir_processed_tr
             directory_output=dir_raw_addresses,
             data_field="addresses",
             chunk_size=100000,
-            suffix="addresses"
+            suffix="addresses",
         )
 
         print(f"Splitting transactions for {wallet_id}...")
@@ -172,9 +202,10 @@ def split_all_wallet_files(wallet_ids, dir_processed_addresses, dir_processed_tr
             directory_output=dir_raw_transactions,
             data_field="transactions",
             chunk_size=100000,
-            suffix="transactions"
+            suffix="transactions",
         )
 
     print("\nAll files split successfully.")
-    
-#_______________________________________________________________________________________________________________________
+
+
+# _______________________________________________________________________________________________________________________

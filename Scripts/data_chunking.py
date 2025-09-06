@@ -4,7 +4,8 @@ import pandas as pd
 from tqdm import tqdm
 from datetime import datetime
 
-#_______________________________________________________________________________________________________________________
+# _______________________________________________________________________________________________________________________
+
 
 def find_global_start_time(files, input_dir):
     """
@@ -21,7 +22,9 @@ def find_global_start_time(files, input_dir):
     for file_name in files:
         with open(os.path.join(input_dir, file_name), "r") as f:
             data = json.load(f)
-            transactions = data if isinstance(data, list) else data.get("transactions", [])
+            transactions = (
+                data if isinstance(data, list) else data.get("transactions", [])
+            )
             timestamps = [tx["time"] for tx in transactions if "time" in tx]
             if timestamps:
                 min_time = min(timestamps)
@@ -29,7 +32,9 @@ def find_global_start_time(files, input_dir):
                     start_time = min_time
     return pd.to_datetime(start_time, unit="s") if start_time else None
 
-#_______________________________________________________________________________________________________________________
+
+# _______________________________________________________________________________________________________________________
+
 
 def create_output_dirs(wallet_id, output_base_dir, intervals_months):
     """
@@ -41,11 +46,24 @@ def create_output_dirs(wallet_id, output_base_dir, intervals_months):
         intervals_months (list): List of intervals in months for chunking.
     """
     for interval in intervals_months:
-        os.makedirs(os.path.join(output_base_dir, f"{wallet_id}/{interval}_months"), exist_ok=True)
+        os.makedirs(
+            os.path.join(output_base_dir, f"{wallet_id}/{interval}_months"),
+            exist_ok=True,
+        )
 
-#_______________________________________________________________________________________________________________________
 
-def process_transaction_file(file_name, input_dir, start_time, intervals_months, chunk_data, wallet_id, output_base_dir):
+# _______________________________________________________________________________________________________________________
+
+
+def process_transaction_file(
+    file_name,
+    input_dir,
+    start_time,
+    intervals_months,
+    chunk_data,
+    wallet_id,
+    output_base_dir,
+):
     """Process a transaction file and chunk its data into specified intervals.
 
     Args:
@@ -66,12 +84,16 @@ def process_transaction_file(file_name, input_dir, start_time, intervals_months,
             continue
 
         tx_time = pd.to_datetime(tx["time"], unit="s")
-        months_since_start = (tx_time.year - start_time.year) * 12 + (tx_time.month - start_time.month)
+        months_since_start = (tx_time.year - start_time.year) * 12 + (
+            tx_time.month - start_time.month
+        )
 
         for interval in intervals_months:
             period_index = months_since_start // interval
             period_start = start_time + pd.DateOffset(months=period_index * interval)
-            period_end = period_start + pd.DateOffset(months=interval) - pd.Timedelta(seconds=1)
+            period_end = (
+                period_start + pd.DateOffset(months=interval) - pd.Timedelta(seconds=1)
+            )
             period_label = f"{period_start.strftime('%Y-%m-%d')}_to_{period_end.strftime('%Y-%m-%d')}"
 
             out_dir = os.path.join(output_base_dir, f"{wallet_id}/{interval}_months")
@@ -82,12 +104,14 @@ def process_transaction_file(file_name, input_dir, start_time, intervals_months,
 
             chunk_data[interval][out_file].append(tx)
 
-#_______________________________________________________________________________________________________________________
+
+# _______________________________________________________________________________________________________________________
+
 
 def save_chunks_to_disk(chunk_data):
     """
     Save the chunked transactions to disk.
-    
+
     Args:
         chunk_data (dict): Dictionary containing chunked transactions.
     """
@@ -98,12 +122,16 @@ def save_chunks_to_disk(chunk_data):
                 json.dump(tx_list, f, indent=4)
             print(f"Saved {len(tx_list)} txs to {out_file}")
 
-#_______________________________________________________________________________________________________________________
 
-def split_transactions_into_chunks(wallet_id, input_dir, output_base_dir, intervals_months):
+# _______________________________________________________________________________________________________________________
+
+
+def split_transactions_into_chunks(
+    wallet_id, input_dir, output_base_dir, intervals_months
+):
     """
     Split transactions of a wallet into chunks based on specified intervals.
-    
+
     Args:
         wallet_id (str): The wallet ID to process.
         input_dir (str): Directory containing the input JSON files.
@@ -113,9 +141,14 @@ def split_transactions_into_chunks(wallet_id, input_dir, output_base_dir, interv
     print(f"Scanning files for {wallet_id}...")
 
     files = sorted(
-        [f for f in os.listdir(input_dir)
-        if f.startswith(f"{wallet_id}_transactions_") and f.endswith(".json")],
-        key=lambda x: int(x.replace(f"{wallet_id}_transactions_", "").replace(".json", ""))
+        [
+            f
+            for f in os.listdir(input_dir)
+            if f.startswith(f"{wallet_id}_transactions_") and f.endswith(".json")
+        ],
+        key=lambda x: int(
+            x.replace(f"{wallet_id}_transactions_", "").replace(".json", "")
+        ),
     )
 
     start_time = find_global_start_time(files, input_dir)
@@ -129,15 +162,20 @@ def split_transactions_into_chunks(wallet_id, input_dir, output_base_dir, interv
     for file_name in files:
         print(f"Processing {file_name}...")
         process_transaction_file(
-            file_name, input_dir, start_time,
-            intervals_months, chunk_data,
-            wallet_id, output_base_dir
+            file_name,
+            input_dir,
+            start_time,
+            intervals_months,
+            chunk_data,
+            wallet_id,
+            output_base_dir,
         )
 
     save_chunks_to_disk(chunk_data)
     print("Chunking complete.")
 
-#_______________________________________________________________________________________________________________________
+
+# _______________________________________________________________________________________________________________________
 
 
 def count_transactions_in_chunks(wallet_id, directory_input):
@@ -147,7 +185,7 @@ def count_transactions_in_chunks(wallet_id, directory_input):
     Args:
         wallet_id (str): Wallet ID to process.
         directory_input (str): Directory containing the chunked JSON files.
-        
+
     Returns:
         pd.DataFrame: DataFrame containing the count of transactions in each chunk.
     """
@@ -157,19 +195,22 @@ def count_transactions_in_chunks(wallet_id, directory_input):
     for file_name in files:
         with open(os.path.join(directory_input, file_name), "r") as f:
             data = json.load(f)
-            transactions = data if isinstance(data, list) else data.get("transactions", [])
-            chunk_counts.append({
-                "chunk": file_name,
-                "count": len(transactions)
-            })
+            transactions = (
+                data if isinstance(data, list) else data.get("transactions", [])
+            )
+            chunk_counts.append({"chunk": file_name, "count": len(transactions)})
     df_chunk_counts = pd.DataFrame(chunk_counts)
     df_chunk_counts["chunk"] = df_chunk_counts["chunk"].str.replace(".json", "")
 
     return df_chunk_counts
 
-#_______________________________________________________________________________________________________________________
 
-def generate_chunk_transaction_reports(wallet_id, base_chunk_dir, intervals, output_dir):
+# _______________________________________________________________________________________________________________________
+
+
+def generate_chunk_transaction_reports(
+    wallet_id, base_chunk_dir, intervals, output_dir
+):
     """
     Conta il numero di transazioni in ogni file di ogni periodo (chunk)
     e salva i risultati in file Excel per ciascun intervallo di mesi.
@@ -187,7 +228,7 @@ def generate_chunk_transaction_reports(wallet_id, base_chunk_dir, intervals, out
         print(f"[INFO] Counting transactions for {interval} months chunks...")
         df_chunk = count_transactions_in_chunks(
             wallet_id=wallet_id,
-            directory_input=os.path.join(base_chunk_dir, f"{interval}_months")
+            directory_input=os.path.join(base_chunk_dir, f"{interval}_months"),
         )
         df_chunk = df_chunk.sort_values(by="count", ascending=False)
         df_chunks[interval] = df_chunk
@@ -198,5 +239,6 @@ def generate_chunk_transaction_reports(wallet_id, base_chunk_dir, intervals, out
         print(f"[INFO] Saved Excel report: {output_path}")
 
     print("[INFO] All reports generated.")
-    
-#_______________________________________________________________________________________________________________________
+
+
+# _______________________________________________________________________________________________________________________

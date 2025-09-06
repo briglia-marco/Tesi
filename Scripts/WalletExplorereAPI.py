@@ -3,16 +3,17 @@ import json
 import os
 from bs4 import BeautifulSoup
 
-#_______________________________________________________________________________________________________________________
+# _______________________________________________________________________________________________________________________
+
 
 def get_wallet_ids(wallet_ids):
     """
     Function to get the wallet IDs from the WalletExplorer website.
     It scrapes the website to find the gambling services and their wallet IDs.
-    
+
     Args:
         wallet_ids (list): A list to store the wallet IDs.
-        
+
     Returns:
         list: A list of wallet IDs associated with gambling services.
     """
@@ -29,22 +30,29 @@ def get_wallet_ids(wallet_ids):
                 wallet_ids.append(wallet_id)
     return wallet_ids
 
-#_______________________________________________________________________________________________________________________
 
-def download_first_100_addresses(directory_addresses, get_wallet_ids, fetch_first_100_addresses):
+# _______________________________________________________________________________________________________________________
+
+
+def download_first_100_addresses(
+    directory_addresses, get_wallet_ids, fetch_first_100_addresses
+):
     """
     Download the first 100 addresses for each wallet in the given directory.
     If no wallets are present, fetch wallet IDs using get_wallet_ids.
-    
+
     Args:
         directory_addresses (str): Directory where the address files will be saved.
         get_wallet_ids (function): Function to fetch wallet IDs.
         fetch_first_100_addresses (function): Function to fetch the first 100 addresses for a wallet.
-        
+
     Returns:
         None
     """
-    if not os.path.exists(directory_addresses) or len(os.listdir(directory_addresses)) == 0:
+    if (
+        not os.path.exists(directory_addresses)
+        or len(os.listdir(directory_addresses)) == 0
+    ):
         wallet_ids = []
         get_wallet_ids(wallet_ids)
     else:
@@ -59,7 +67,9 @@ def download_first_100_addresses(directory_addresses, get_wallet_ids, fetch_firs
 
     print("First 100 addresses for selected wallets downloaded.")
 
-#_______________________________________________________________________________________________________________________
+
+# _______________________________________________________________________________________________________________________
+
 
 def get_transaction_count(wallet_id):
     """
@@ -77,18 +87,25 @@ def get_transaction_count(wallet_id):
     if response.status_code != 200:
         print(f"Error: {response.status_code}")
         return 0
-    
+
     soup = BeautifulSoup(response.text, "html.parser")
     div = soup.find("div", class_="paging")
     small = div.select_one("small")
     if small:
-        transaction_count = small.text.strip().split(" ")[-1].replace(",", "").replace(")", "")
+        transaction_count = (
+            small.text.strip().split(" ")[-1].replace(",", "").replace(")", "")
+        )
         return int(transaction_count)
     return 0
 
-#_______________________________________________________________________________________________________________________
 
-def get_all_wallets_info(directory="Data/processed/first_100_addresses", output_file="Data/processed/info/wallets_info.json"):
+# _______________________________________________________________________________________________________________________
+
+
+def get_all_wallets_info(
+    directory="Data/processed/first_100_addresses",
+    output_file="Data/processed/info/wallets_info.json",
+):
     """
     Function to get wallet information for all wallets found in the specified directory.
 
@@ -119,7 +136,7 @@ def get_all_wallets_info(directory="Data/processed/first_100_addresses", output_
             wallet_info = {
                 "wallet_id": wallet_id,
                 "total_addresses": addresses.get("addresses_count", 0),
-                "total_transactions": total_transactions
+                "total_transactions": total_transactions,
             }
 
             data.append(wallet_info)
@@ -132,4 +149,5 @@ def get_all_wallets_info(directory="Data/processed/first_100_addresses", output_
 
     return data
 
-#_______________________________________________________________________________________________________________________
+
+# _______________________________________________________________________________________________________________________

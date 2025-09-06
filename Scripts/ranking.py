@@ -4,12 +4,15 @@ import os
 from datetime import datetime, timezone
 from collections import Counter
 
-#_______________________________________________________________________________________________________________________
+# _______________________________________________________________________________________________________________________
 
-def process_wallet_dataframe(wallets_info_path, directory_addresses, known_services, w1, w2, w3, w4, w5):
+
+def process_wallet_dataframe(
+    wallets_info_path, directory_addresses, known_services, w1, w2, w3, w4, w5
+):
     """
     Build dataframe, normalize columns and calculate scores.
-    
+
     Args:
         wallets_info_path (str): Path to the wallets info JSON file.
         directory_addresses (str): Directory containing wallet address files.
@@ -22,33 +25,46 @@ def process_wallet_dataframe(wallets_info_path, directory_addresses, known_servi
     df = build_wallets_dataframe(
         wallets_info_path=wallets_info_path,
         directory_addresses=directory_addresses,
-        known_services=known_services
+        known_services=known_services,
     )
 
-    columns_to_normalize = ["total_transactions", "total_addresses", "transactions_per_address", "first_100_transactions"]
+    columns_to_normalize = [
+        "total_transactions",
+        "total_addresses",
+        "transactions_per_address",
+        "first_100_transactions",
+    ]
     df = normalize_columns(df, columns_to_normalize)
     df = calculate_scores(df, w1, w2, w3, w4, w5)
 
     return df
 
-#_______________________________________________________________________________________________________________________
+
+# _______________________________________________________________________________________________________________________
+
 
 def build_wallets_dataframe(wallets_info_path, directory_addresses, known_services):
     """
     Build the initial dataframe with wallet statistics.
-    
+
     Args:
         wallets_info_path (str): Path to the wallets info JSON file.
         directory_addresses (str): Directory containing wallet address files.
         known_services (list): List of known gambling services.
-        
+
     Returns:
         pd.DataFrame: Dataframe with wallet statistics.
     """
-    df = pd.DataFrame(columns=[
-        "wallet_id", "total_transactions", "total_addresses",
-        "transactions_per_address", "first_100_transactions", "notoriety"
-    ])
+    df = pd.DataFrame(
+        columns=[
+            "wallet_id",
+            "total_transactions",
+            "total_addresses",
+            "transactions_per_address",
+            "first_100_transactions",
+            "notoriety",
+        ]
+    )
 
     with open(wallets_info_path, "r") as f:
         data = json.load(f)
@@ -57,12 +73,16 @@ def build_wallets_dataframe(wallets_info_path, directory_addresses, known_servic
         wallet_id = wallet["wallet_id"]
         total_transactions = wallet["total_transactions"]
         total_addresses = wallet["total_addresses"]
-        transactions_per_address = total_transactions / total_addresses if total_addresses > 0 else 0
+        transactions_per_address = (
+            total_transactions / total_addresses if total_addresses > 0 else 0
+        )
         notoriety = 1 if wallet_id in known_services else 0
 
         with open(f"{directory_addresses}/{wallet_id}_addresses.json", "r") as f:
             addresses_data = json.load(f)
-            first_100_transactions = sum(address["incoming_txs"] for address in addresses_data["addresses"][:100])
+            first_100_transactions = sum(
+                address["incoming_txs"] for address in addresses_data["addresses"][:100]
+            )
 
         df.loc[len(df)] = {
             "wallet_id": wallet_id,
@@ -70,14 +90,18 @@ def build_wallets_dataframe(wallets_info_path, directory_addresses, known_servic
             "total_addresses": total_addresses,
             "transactions_per_address": transactions_per_address,
             "first_100_transactions": first_100_transactions,
-            "notoriety": notoriety
+            "notoriety": notoriety,
         }
 
     return df
 
-#_______________________________________________________________________________________________________________________
 
-def get_wallet_activity_stats(wallet_id, directory_transactions, coverage_threshold=0.8):
+# _______________________________________________________________________________________________________________________
+
+
+def get_wallet_activity_stats(
+    wallet_id, directory_transactions, coverage_threshold=0.8
+):
     """
     Return first and last transaction date, peak year and activity concentration span for a wallet.
 
@@ -92,12 +116,16 @@ def get_wallet_activity_stats(wallet_id, directory_transactions, coverage_thresh
     timestamps = []
 
     for file_name in os.listdir(directory_transactions):
-        if file_name == f"{wallet_id}_transactions.json" or file_name.startswith(f"{wallet_id}_transactions_"):
+        if file_name == f"{wallet_id}_transactions.json" or file_name.startswith(
+            f"{wallet_id}_transactions_"
+        ):
             print(file_name)
             with open(os.path.join(directory_transactions, file_name), "r") as f:
                 data = json.load(f)
                 if isinstance(data, dict) and "transactions" in data:
-                    timestamps.extend(tx["time"] for tx in data["transactions"] if "time" in tx)
+                    timestamps.extend(
+                        tx["time"] for tx in data["transactions"] if "time" in tx
+                    )
 
     if not timestamps:
         return (None, None, None, None)
@@ -123,7 +151,9 @@ def get_wallet_activity_stats(wallet_id, directory_transactions, coverage_thresh
 
     return first_date, last_date, peak_year, span
 
-#_______________________________________________________________________________________________________________________
+
+# _______________________________________________________________________________________________________________________
+
 
 def calculate_wallet_activity(df_wallets, directory_transactions):
     """
@@ -142,7 +172,9 @@ def calculate_wallet_activity(df_wallets, directory_transactions):
     activity_spans = []
 
     for wallet_id in df_wallets["wallet_id"]:
-        first_date, last_date, peak_year, activity_span = get_wallet_activity_stats(wallet_id, directory_transactions)
+        first_date, last_date, peak_year, activity_span = get_wallet_activity_stats(
+            wallet_id, directory_transactions
+        )
         first_dates.append(first_date)
         last_dates.append(last_date)
         peak_years.append(peak_year)
@@ -154,16 +186,19 @@ def calculate_wallet_activity(df_wallets, directory_transactions):
     df_wallets["activity_span_years"] = activity_spans
 
     return df_wallets
-#_______________________________________________________________________________________________________________________
+
+
+# _______________________________________________________________________________________________________________________
+
 
 def normalize_columns(df, columns):
     """
     Normalize the specified columns of a dataframe using min-max scaling.
-    
+
     Args:
         df (pd.DataFrame): The dataframe to normalize.
         columns (list): List of column names to normalize.
-        
+
     Returns:
         pd.DataFrame: The dataframe with normalized columns.
     """
@@ -173,27 +208,30 @@ def normalize_columns(df, columns):
         df[f"{col}_norm"] = (df[col] - min_val) / (max_val - min_val)
     return df
 
-#_______________________________________________________________________________________________________________________
+
+# _______________________________________________________________________________________________________________________
+
 
 def calculate_scores(df, w1, w2, w3, w4, w5):
     """
     Calculate the weighted score for each wallet based on normalized columns.
-    
+
     Args:
         df (pd.DataFrame): The dataframe with normalized columns.
         w1, w2, w3, w4, w5 (float): Weights for each column.
-        
+
     Returns:
         pd.DataFrame: The dataframe with a new 'score' column.
     """
     df["score"] = (
-        w1 * df["total_transactions_norm"] +
-        w2 * df["total_addresses_norm"] +
-        w3 * df["transactions_per_address_norm"] +
-        w4 * df["first_100_transactions_norm"] +
-        w5 * df["notoriety"]
+        w1 * df["total_transactions_norm"]
+        + w2 * df["total_addresses_norm"]
+        + w3 * df["transactions_per_address_norm"]
+        + w4 * df["first_100_transactions_norm"]
+        + w5 * df["notoriety"]
     )
     df = df.sort_values(by="score", ascending=False).reset_index(drop=True)
     return df
 
-#_______________________________________________________________________________________________________________________
+
+# _______________________________________________________________________________________________________________________
