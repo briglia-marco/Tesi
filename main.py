@@ -69,15 +69,12 @@ if __name__ == "__main__":
 
     # MERGE JSON FILES
 
-    # weights: total transactions, total addresses, transactions per address,
-    # first 100 transactions/total transactions, notoriety
-
     w1, w2, w3, w4, w5 = (
-        0.35,
-        0.03,
-        0.25,
-        0.35,
-        0.02,
+        0.35,  # total transactions
+        0.03,  # total addresses
+        0.25,  # transactions per address
+        0.35,  # first 100 transactions/total transactions
+        0.02,  # notoriety
     )
 
     known_services = [
@@ -85,16 +82,8 @@ if __name__ == "__main__":
         "999Dice.com",
         "PrimeDice.com",
         "Betcoin.ag",
-        "BitZino.com",
         "FortuneJack.com",
         "CloudBet.com",
-        "BitcoinVideoCasino.com",
-        "NitrogenSports.eu",
-        "SatoshiDice.com-original",
-        "Coinroll.com",
-        "777Coin.com",
-        "Crypto-Games.net",
-        "SwCPoker.eu",
     ]
 
     df_wallets = process_wallet_dataframe(
@@ -151,7 +140,7 @@ if __name__ == "__main__":
                 count_field="transactions_count",
             )
 
-    # df_wallets = df_wallets[1:15]
+    # df_wallets = df_wallets[1:5]
     # df_wallets = calculate_wallet_activity(
     #     df_wallets, directory_processed_txs
     # )
@@ -189,7 +178,9 @@ if __name__ == "__main__":
 
     if not all_reports_exist:
         generate_chunk_transaction_reports(
-            base_chunk_dir=SERVICE_DIR, intervals=intervals, output_dir=DIRECTORY_XLSX
+            base_chunk_dir=SERVICE_DIR,
+            intervals=intervals,
+            output_dir=DIRECTORY_XLSX,
         )
     else:
         print("[INFO] All chunk reports already exist, skipping generation.")

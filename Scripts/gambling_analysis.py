@@ -25,7 +25,9 @@ def detect_martingale(df_txs_wallet, tol=0.05, min_prev_amount=0.00001):
     """
     df_txs_wallet = df_txs_wallet.sort_values("time").reset_index(drop=True)
 
-    amounts = pd.to_numeric(df_txs_wallet["amount"], errors="coerce").to_numpy()
+    amounts = pd.to_numeric(
+        df_txs_wallet["amount"], errors="coerce"
+    ).to_numpy()
     n = len(amounts)
 
     if n < 2:
@@ -78,7 +80,9 @@ def detect_dAlembert(df_txs_wallet, tol=0.01):
     """
     df_txs_wallet = df_txs_wallet.sort_values("time").reset_index(drop=True)
 
-    amounts = pd.to_numeric(df_txs_wallet["amount"], errors="coerce").to_numpy()
+    amounts = pd.to_numeric(
+        df_txs_wallet["amount"], errors="coerce"
+    ).to_numpy()
     n = len(amounts)
 
     if n < 2:
@@ -130,7 +134,9 @@ def detect_flat_betting(df_txs_wallet, tol=0.01):
     """
     df_txs_wallet = df_txs_wallet.sort_values("time").reset_index(drop=True)
 
-    amounts = pd.to_numeric(df_txs_wallet["amount"], errors="coerce").to_numpy()
+    amounts = pd.to_numeric(
+        df_txs_wallet["amount"], errors="coerce"
+    ).to_numpy()
     n = len(amounts)
 
     if n == 0:
@@ -148,7 +154,9 @@ def detect_flat_betting(df_txs_wallet, tol=0.01):
 
     # Metrics
     flat_ratio = (
-        float(np.sum(flat_mask) / flat_mask.size) if flat_mask.size > 0 else 1.0
+        float(np.sum(flat_mask) / flat_mask.size)
+        if flat_mask.size > 0
+        else 1.0
     )
     flat_max_streak = max_consecutive_true(flat_mask)
 
@@ -274,7 +282,9 @@ def analyze_period(period, wallets, results_dir, dir_chunks):
         if result:
             period_results.append(result)
 
-    results_file_path = os.path.join(results_dir, f"{period}_bet_analysis.json")
+    results_file_path = os.path.join(
+        results_dir, f"{period}_bet_analysis.json"
+    )
     os.makedirs(results_dir, exist_ok=True)
     with open(results_file_path, "w", encoding="utf-8") as f:
         json.dump(period_results, f, indent=4)

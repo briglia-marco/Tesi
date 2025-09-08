@@ -23,7 +23,9 @@ def download_wallet_addresses(wallet_ids, directory_raw_addresses):
     """
     for wallet_id in wallet_ids:
         if wallet_id in ("SatoshiDice.com-original", "BitZillions.com"):
-            address_file = f"{directory_raw_addresses}/{wallet_id}_addresses_1.json"
+            address_file = (
+                f"{directory_raw_addresses}/{wallet_id}_addresses_1.json"
+            )
             if not os.path.exists(address_file):
                 print(f"Downloading all addresses for {wallet_id}...")
                 fetch_all_addresses(wallet_id, directory_raw_addresses)
@@ -44,10 +46,14 @@ def download_wallet_transactions(wallet_ids, directory_raw_transactions):
     """
     for wallet_id in wallet_ids:
         if wallet_id in ("SatoshiDice.com-original", "BitZillions.com"):
-            tx_file = f"{directory_raw_transactions}/{wallet_id}_transactions_1.json"
+            tx_file = (
+                f"{directory_raw_transactions}/{wallet_id}_transactions_1.json"
+            )
             if not os.path.exists(tx_file):
                 print(f"Downloading all transactions for {wallet_id}...")
-                fetch_wallet_transactions(wallet_id, directory_raw_transactions)
+                fetch_wallet_transactions(
+                    wallet_id, directory_raw_transactions
+                )
 
 
 # _________________________________________________________________________________________________
@@ -96,7 +102,9 @@ def merge_wallet_json_files(
 
         if isinstance(data, dict) and data_field in data:
             merged_data[data_field].extend(data[data_field])
-            merged_data[count_field] += data.get(count_field, len(data[data_field]))
+            merged_data[count_field] += data.get(
+                count_field, len(data[data_field])
+            )
         elif isinstance(data, list):
             merged_data[data_field].extend(data)
             merged_data[count_field] += len(data)

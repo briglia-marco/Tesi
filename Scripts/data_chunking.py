@@ -27,10 +27,14 @@ def find_global_start_time(files, input_dir):
     """
     start_time = None
     for file_name in files:
-        with open(os.path.join(input_dir, file_name), "r", encoding="utf-8") as f:
+        with open(
+            os.path.join(input_dir, file_name), "r", encoding="utf-8"
+        ) as f:
             data = json.load(f)
             transactions = (
-                data if isinstance(data, list) else data.get("transactions", [])
+                data
+                if isinstance(data, list)
+                else data.get("transactions", [])
             )
             timestamps = [tx["time"] for tx in transactions if "time" in tx]
             if timestamps:
@@ -84,7 +88,9 @@ def process_transaction_file(
     """
     with open(os.path.join(input_dir, file_name), "r", encoding="utf-8") as f:
         data = json.load(f)
-        transactions = data if isinstance(data, list) else data.get("transactions", [])
+        transactions = (
+            data if isinstance(data, list) else data.get("transactions", [])
+        )
 
     for tx in transactions:
         if "time" not in tx:
@@ -97,15 +103,21 @@ def process_transaction_file(
 
         for interval in intervals_months:
             period_index = months_since_start // interval
-            period_start = start_time + pd.DateOffset(months=period_index * interval)
+            period_start = start_time + pd.DateOffset(
+                months=period_index * interval
+            )
             period_end = (
-                period_start + pd.DateOffset(months=interval) - pd.Timedelta(seconds=1)
+                period_start
+                + pd.DateOffset(months=interval)
+                - pd.Timedelta(seconds=1)
             )
             period_label = (
                 f"{period_start.strftime('%Y-%m-%d')}_to_"
                 f"{period_end.strftime('%Y-%m-%d')}"
             )
-            out_dir = os.path.join(output_base_dir, f"{wallet_id}/{interval}_months")
+            out_dir = os.path.join(
+                output_base_dir, f"{wallet_id}/{interval}_months"
+            )
             out_file = os.path.join(out_dir, f"{period_label}.json")
 
             if out_file not in chunk_data[interval]:
@@ -153,7 +165,8 @@ def split_transactions_into_chunks(
         [
             f
             for f in os.listdir(input_dir)
-            if f.startswith(f"{wallet_id}_transactions_") and f.endswith(".json")
+            if f.startswith(f"{wallet_id}_transactions_")
+            and f.endswith(".json")
         ],
         key=lambda x: int(
             x.replace(f"{wallet_id}_transactions_", "").replace(".json", "")
@@ -201,14 +214,22 @@ def count_transactions_in_chunks(directory_input):
 
     chunk_counts = []
     for file_name in files:
-        with open(os.path.join(directory_input, file_name), "r", encoding="utf-8") as f:
+        with open(
+            os.path.join(directory_input, file_name), "r", encoding="utf-8"
+        ) as f:
             data = json.load(f)
             transactions = (
-                data if isinstance(data, list) else data.get("transactions", [])
+                data
+                if isinstance(data, list)
+                else data.get("transactions", [])
             )
-            chunk_counts.append({"chunk": file_name, "count": len(transactions)})
+            chunk_counts.append(
+                {"chunk": file_name, "count": len(transactions)}
+            )
     df_chunk_counts = pd.DataFrame(chunk_counts)
-    df_chunk_counts["chunk"] = df_chunk_counts["chunk"].str.replace(".json", "")
+    df_chunk_counts["chunk"] = df_chunk_counts["chunk"].str.replace(
+        ".json", ""
+    )
 
     return df_chunk_counts
 

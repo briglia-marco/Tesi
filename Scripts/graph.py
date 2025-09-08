@@ -65,7 +65,9 @@ def build_wallet_graph_for_chunk(
 
     chunk_path = os.path.join(base_directory, chunk_to_process)
     if not os.path.exists(chunk_path):
-        print(f"Chunk file {chunk_to_process} does not exist in {base_directory}.")
+        print(
+            f"Chunk file {chunk_to_process} does not exist in {base_directory}."
+        )
         return
 
     with open(chunk_path, "r", encoding="utf-8") as f:
@@ -174,7 +176,9 @@ def build_txs_graph_for_chunk(
 
     chunk_path = os.path.join(base_directory, chunk_to_process)
     if not os.path.exists(chunk_path):
-        print(f"Chunk file {chunk_to_process} does not exist in {base_directory}.")
+        print(
+            f"Chunk file {chunk_to_process} does not exist in {base_directory}."
+        )
         return
 
     G = nx.MultiDiGraph()
@@ -198,7 +202,8 @@ def build_txs_graph_for_chunk(
             list_of_transactions.append(transaction)
 
         elif (
-            transaction["type"] == "received" and transaction["wallet_id"] == wallet_id
+            transaction["type"] == "received"
+            and transaction["wallet_id"] == wallet_id
         ):
             transaction = {
                 "txid": transaction["txid"],
@@ -225,9 +230,9 @@ def build_txs_graph_for_chunk(
     )
 
     for transaction in list_of_transactions[1:]:
-        prev_txid = list_of_transactions[list_of_transactions.index(transaction) - 1][
-            "txid"
-        ]
+        prev_txid = list_of_transactions[
+            list_of_transactions.index(transaction) - 1
+        ]["txid"]
         G.add_node(
             transaction["txid"],
             type="transaction",
@@ -284,8 +289,12 @@ def export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process):
 
     nodes_df = pd.DataFrame(nodes_data)
     edges_df = pd.DataFrame(edges_data)
-    nodes_file = os.path.join(output_dir, f"{wallet_id}_nodes_{chunk_base_name}.csv")
-    edges_file = os.path.join(output_dir, f"{wallet_id}_edges_{chunk_base_name}.csv")
+    nodes_file = os.path.join(
+        output_dir, f"{wallet_id}_nodes_{chunk_base_name}.csv"
+    )
+    edges_file = os.path.join(
+        output_dir, f"{wallet_id}_edges_{chunk_base_name}.csv"
+    )
     nodes_df.to_csv(nodes_file, index=False)
     edges_df.to_csv(edges_file, index=False)
 

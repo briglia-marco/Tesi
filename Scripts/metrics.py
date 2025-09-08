@@ -326,7 +326,9 @@ def calculate_time_variance(wallet_id, transactions):
 # _________________________________________________________________________________________________
 
 
-def calculate_chunk_global_metrics(chunk_file_path, global_metrics_df, chunk_file_name):
+def calculate_chunk_global_metrics(
+    chunk_file_path, global_metrics_df, chunk_file_name
+):
     """
     Calculate global metrics for a chunk and update the global metrics
     DataFrame.
