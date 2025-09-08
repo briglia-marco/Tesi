@@ -22,6 +22,7 @@ def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
         file_index (int): The index for the output file.
         output_dir (str): The directory where the JSON file will be saved.
     """
+    os.makedirs(output_dir, exist_ok=True)
     file_path = os.path.join(
         output_dir, f"{wallet_id}_transactions_{file_index}.json"
     )

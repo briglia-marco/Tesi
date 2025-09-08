@@ -249,6 +249,7 @@ def generate_chunk_transaction_reports(base_chunk_dir, intervals, output_dir):
         output_dir (str): Directory dove salvare i file Excel risultanti.
     """
     os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(base_chunk_dir, exist_ok=True)
     df_chunks = {}
 
     for interval in intervals:

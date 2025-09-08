@@ -7,35 +7,38 @@ import os
 import pandas as pd
 from Scripts.ranking import process_wallet_dataframe
 from Scripts.graph import build_graphs_for_wallet
-from Scripts.wallet_explorer_api import (
-    download_first_100_addresses,
-    get_all_wallets_info,
-)
 from Scripts.data_processing import (
     download_wallet_transactions,
     download_wallet_addresses,
     all_files_exist,
-    merge_wallet_json_files,
+)
+from Scripts.wallet_explorer_api import (
+    download_first_100_addresses,
+    get_all_wallets_info,
 )
 from Scripts.data_chunking import (
     split_transactions_into_chunks,
     generate_chunk_transaction_reports,
 )
-from Scripts.metrics import (
-    analyze_chunk_metrics,
-    calculate_chunk_global_metrics,
-)
-from Scripts.rolling_analisys import (
-    run_rolling_window_analysis,
-)
-from Scripts.gambling_analysis import (
-    run_gambling_detection,
-)
+from Scripts.metrics import analyze_chunk_metrics, calculate_chunk_global_metrics
+from Scripts.rolling_analisys import run_rolling_window_analysis
+from Scripts.gambling_analysis import run_gambling_detection
+from Scripts.merge import merge_files
 
-if __name__ == "__main__":
-    # DOWNLOAD DATA
 
-    # SatoshiDice.com-original (100000, 1000), BitZillions.com (10000, 200)
+def main():
+    """
+    Entry point of the program.
+
+    Sets the target service and threshold parameters, then starts
+    the pipeline for downloading, processing, and analyzing
+    transactions of the selected wallet(s).
+    """
+
+    # SET THE TARGET SERVICE AND THE THRESHOLD PARAMETERS
+
+    # SatoshiDice.com-original, (100000, 1000)
+    # BitZillions.com, (10000, 200)
     SERVICE = "SatoshiDice.com-original"
     TRANSACTIONS_FOR_CHUNK_THRESHOLD = 100000
     MIN_TRANSACTIONS_TO_ANALYZE_WALLET = 1000
@@ -49,6 +52,10 @@ if __name__ == "__main__":
     SERVICE_DIR = f"Data/chunks/{SERVICE}"
     DIRECTORY_CHUNKS = f"{SERVICE_DIR}/3_months"
     DIRECTORY_XLSX = f"{SERVICE_DIR}/xlsx"
+
+    # _____________________________________________________________________________________________
+
+    # DOWNLOAD DATA
 
     os.makedirs(DIRECTORY_PROCESSED_100_ADDRESSES, exist_ok=True)
     if len(os.listdir(DIRECTORY_PROCESSED_100_ADDRESSES)) == 0:
@@ -68,7 +75,7 @@ if __name__ == "__main__":
 
     # _____________________________________________________________________________________________
 
-    # MERGE JSON FILES
+    # DOWNLOAD DATA
 
     w1, w2, w3, w4, w5 = (
         0.35,  # total transactions
@@ -79,11 +86,11 @@ if __name__ == "__main__":
     )
 
     known_services = [
+        "SatoshiDice.com-original",
         "SatoshiDice.com",
+        "BitZillions.com",
         "999Dice.com",
-        "PrimeDice.com",
         "Betcoin.ag",
-        "FortuneJack.com",
         "CloudBet.com",
     ]
 
@@ -98,7 +105,7 @@ if __name__ == "__main__":
         w5=w5,
     )
 
-    wallet_ids = df_wallets["wallet_id"].iloc[:15].tolist()
+    wallet_ids = df_wallets["wallet_id"].iloc[:5].tolist()
 
     os.makedirs(DIRECTORY_RAW_ADDRESSES, exist_ok=True)
     if not all_files_exist(DIRECTORY_RAW_ADDRESSES, wallet_ids):
@@ -108,49 +115,20 @@ if __name__ == "__main__":
     if not all_files_exist(DIRECTORY_RAW_TRANSACTIONS, wallet_ids):
         download_wallet_transactions(wallet_ids, DIRECTORY_RAW_TRANSACTIONS)
 
-    os.makedirs(DIRECTORY_PROCESSED_ADDR, exist_ok=True)
-    existing_merged_addresses = (
-        set(os.listdir(DIRECTORY_PROCESSED_ADDR))
-        if os.path.exists(DIRECTORY_PROCESSED_ADDR)
-        else set()
-    )
-    os.makedirs(DIRECTORY_PROCESSED_TXS, exist_ok=True)
-    existing_merged_transactions = (
-        set(os.listdir(DIRECTORY_PROCESSED_TXS))
-        if os.path.exists(DIRECTORY_PROCESSED_TXS)
-        else set()
-    )
+    # _____________________________________________________________________________________________
 
-    for wallet_id in wallet_ids:
-        MERGED_ADDRESS_FILE = f"{wallet_id}_addresses.json"
-        MERGED_TRANSACTION_FILE = f"{wallet_id}_transactions.json"
+    # MERGE JSON FILES
 
-        if MERGED_ADDRESS_FILE not in existing_merged_addresses:
-            merge_wallet_json_files(
-                wallet_id=wallet_id,
-                directory_input=DIRECTORY_RAW_ADDRESSES,
-                directory_output=DIRECTORY_PROCESSED_ADDR,
-                output_suffix="addresses",
-                data_field="addresses",
-                count_field="addresses_count",
-            )
+    DO_MERGE = False
 
-        if MERGED_TRANSACTION_FILE not in existing_merged_transactions:
-            merge_wallet_json_files(
-                wallet_id=wallet_id,
-                directory_input=DIRECTORY_RAW_TRANSACTIONS,
-                directory_output=DIRECTORY_PROCESSED_TXS,
-                output_suffix="transactions",
-                data_field="transactions",
-                count_field="transactions_count",
-            )
-
-    # df_wallets = df_wallets[1:5]
-    # df_wallets = calculate_wallet_activity(
-    #     df_wallets, directory_processed_txs
-    # )
-
-    print("All JSON files merged.")
+    if DO_MERGE is True:
+        merge_files(
+            wallet_ids,
+            DIRECTORY_RAW_ADDRESSES,
+            DIRECTORY_PROCESSED_ADDR,
+            DIRECTORY_RAW_TRANSACTIONS,
+            DIRECTORY_PROCESSED_TXS,
+        )
 
     # _____________________________________________________________________________________________
 
@@ -172,6 +150,7 @@ if __name__ == "__main__":
                 intervals_months=[interval],
             )
 
+    os.makedirs(DIRECTORY_XLSX, exist_ok=True)
     all_reports_exist = all(
         os.path.exists(os.path.join(DIRECTORY_XLSX, f"{interval}_months.xlsx"))
         for interval in intervals
@@ -256,3 +235,7 @@ if __name__ == "__main__":
         DIRECTORY_CHUNKS,
         threshold=PERCENT_LOW_VAR_THRESHOLD,
     )
+
+
+if __name__ == "__main__":
+    main()
