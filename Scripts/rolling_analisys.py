@@ -1,9 +1,16 @@
+"""
+Rolling window analysis of betting behavior for wallets.
+This script analyzes the betting behavior of wallets over a specified period
+using rolling window statistics. It computes rolling mean and variance of
+time differences between bets, identifies patterns, and generates plots.
+"""
+
 import os
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def load_wallet_payouts(wallet_id, payouts_file):
@@ -29,7 +36,7 @@ def load_wallet_payouts(wallet_id, payouts_file):
     return payouts_wallet_sorted
 
 
-# ______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def load_wallet_bets(wallet_id, txs_file):
@@ -53,7 +60,7 @@ def load_wallet_bets(wallet_id, txs_file):
     return txs_wallet_sorted
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def compute_time_differences(txs_wallet):
@@ -76,8 +83,9 @@ def compute_rolling_metrics(time_diffs_series, window_size=10):
     Compute rolling metrics for time differences.
 
     Args:
-        time_diffs_series (pd.Series): A pandas Series containing time differences.
-        window_size (int, optional): The size of the rolling window. Defaults to 10.
+        time_diffs_series (pd.Series): Pandas Series containing time
+        differences.
+        window_size (int, optional): The size of the rolling window.
 
     Returns:
         tuple: A tuple containing the rolling mean and rolling variance.
@@ -87,7 +95,7 @@ def compute_rolling_metrics(time_diffs_series, window_size=10):
     return rolling_mean, rolling_var
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def summarize_wallet_behavior(
@@ -107,7 +115,8 @@ def summarize_wallet_behavior(
         _type_: _description_
     """
     low_var_mask = (rolling_var < low_var_threshold).astype(int)
-    groups = low_var_mask.groupby((low_var_mask != low_var_mask.shift()).cumsum())
+    group_keys = (low_var_mask != low_var_mask.shift()).cumsum()
+    groups = low_var_mask.groupby(group_keys)
     long_streaks = groups.sum().sort_values(
         ascending=False
     )  # Get the longest streaks of low variance
@@ -116,7 +125,8 @@ def summarize_wallet_behavior(
         "wallet_id": str(wallet_id),
         "n_tx": int(len(txs_wallet)),
         "percent_low_var_windows": round(
-            float((rolling_var < low_var_threshold).sum() / len(rolling_var)), 2
+            float((rolling_var < low_var_threshold).sum() / len(rolling_var)),
+            2,
         ),
         "longest_low_var_streak": (
             int(long_streaks.iloc[0]) if not long_streaks.empty else 0
@@ -126,7 +136,7 @@ def summarize_wallet_behavior(
     }
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def plot_rolling_metrics(
@@ -141,7 +151,7 @@ def plot_rolling_metrics(
         rolling_var (pd.Series): The rolling variance of time differences.
         low_var_threshold (float): The threshold for low variance.
     """
-    fig, axs = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
+    _, axs = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
 
     axs[0].plot(rolling_mean, label="Rolling Mean (sec)", color="blue")
     axs[0].set_ylabel("Tempo medio")
@@ -184,7 +194,7 @@ def plot_rolling_metrics(
     # plt.show()
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def analyze_wallet(
@@ -204,10 +214,11 @@ def analyze_wallet(
         period_metrics_file (str): The file containing metrics for the period.
         metrics_dir (str): Directory containing the metrics files.
         json_dir (str): Directory containing the JSON files for the period.
-        wallet_index (int, optional): Index of the wallet to analyze. Defaults to 0.
-        wallet_id_override (str, optional): Direct wallet ID to analyze. Overrides index-based selection.
-        window_size (int, optional): Size of the rolling window. Defaults to 10.
-        var_threshold (float, optional): Threshold for low variance. Defaults to 10.
+        wallet_index (int, optional): Index of the wallet to analyze
+        wallet_id_override (str, optional): Direct wallet ID to analyze.
+        Overrides index-based selection.
+        window_size (int, optional): Size of the rolling window.
+        var_threshold (float, optional): Threshold for low variance.
 
     Returns:
         dict: A summary of the wallet's behavior.
@@ -224,22 +235,24 @@ def analyze_wallet(
     txs_file_path = os.path.join(json_dir, period_name)
     token = txs_file_path.split(".")
     txs_file_path = token[0] + "." + token[1] + "." + token[3]
-    with open(txs_file_path, "r") as f:
+    with open(txs_file_path, "r", encoding="utf-8") as f:
         txs_file = json.load(f)
 
     txs_wallet = load_wallet_bets(wallet_id, txs_file)
-    time_diffs = compute_time_differences(txs_wallet)
-    rolling_mean, rolling_var = compute_rolling_metrics(time_diffs, window_size)
+    time_diff = compute_time_differences(txs_wallet)
+    rolling_mean, rolling_var = compute_rolling_metrics(time_diff, window_size)
     summary = summarize_wallet_behavior(
-        wallet_id, txs_wallet, time_diffs, rolling_var, var_threshold
+        wallet_id, txs_wallet, time_diff, rolling_var, var_threshold
     )
 
-    plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, var_threshold, service)
+    plot_rolling_metrics(
+        wallet_id, rolling_mean, rolling_var, var_threshold, service
+    )  # only saves plot to file
 
     return summary
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def get_wallets_meeting_criteria(metrics_path, min_tx=1000):
@@ -257,3 +270,180 @@ def get_wallets_meeting_criteria(metrics_path, min_tx=1000):
     df = pd.read_excel(metrics_path)
     filtered = df[df["out_degree"] >= min_tx]
     return filtered["wallet_id"].tolist()
+
+
+# _________________________________________________________________________________________________
+
+
+def list_metrics_files(metrics_dir):
+    """
+    Returns a list of metric files in the specified directory.
+
+    Args:
+        metrics_dir (str): The directory containing metric files.
+
+    Returns:
+        list: A list of metric file names.
+    """
+    return [
+        f
+        for f in os.listdir(metrics_dir)
+        if f.endswith(".xlsx") and "json_metrics" in f
+    ]
+
+
+# _________________________________________________________________________________________________
+
+
+def build_log_file_path(log_dir, metrics_file):
+    """
+    Builds the log file path based on the metrics file name.
+
+    Args:
+        log_dir (str): The directory where logs are stored.
+        metrics_file (str): The name of the metrics file.
+
+    Returns:
+        str: The full path to the log file.
+    """
+    os.makedirs(log_dir, exist_ok=True)
+    file_name = f"{metrics_file.split('.')[0]}.json"
+    return os.path.join(log_dir, file_name)
+
+
+# _________________________________________________________________________________________________
+
+
+def should_skip_analysis(log_file_path, min_tx):
+    """
+    Check if the analysis should be skipped based on existing log file.
+
+    Args:
+        log_file_path (str): The path to the log file.
+        min_tx (int): The minimum number of transactions required.
+
+    Returns:
+        bool: True if analysis should be skipped, False otherwise.
+    """
+    if not os.path.exists(log_file_path):
+        return False
+
+    try:
+        with open(log_file_path, "r", encoding="utf-8") as log_file:
+            existing = json.load(log_file)
+            return existing.get("min_transactions") == min_tx
+    except json.JSONDecodeError:
+        print(f" -> File {log_file_path} not valid, repeat analysis")
+        return False
+
+
+# _________________________________________________________________________________________________
+
+
+def analyze_wallets_for_file(
+    metrics_file,
+    metrics_dir,
+    json_dir,
+    service,
+    window_size,
+    var_threshold,
+    min_tx=1000,
+):
+    """
+    Analyze all wallets in a metrics file that meet the specified criteria.
+
+    Args:
+        metrics_file (str): The name of the metrics file.
+        metrics_dir (str): The directory containing the metrics files.
+        json_dir (str): The directory containing the JSON files.
+        service (str): The service name.
+        window_size (int): The size of the rolling window.
+        var_threshold (float): The threshold for low variance.
+        min_tx (int): The minimum number of transactions required.
+
+    Returns:
+        dict: A log report containing the analysis results.
+    """
+    wallet_ids = get_wallets_meeting_criteria(
+        os.path.join(metrics_dir, metrics_file), min_tx=min_tx
+    )
+
+    log_report = {"min_transactions": min_tx, "wallets": []}
+
+    for wallet_id in wallet_ids:
+        summary = analyze_wallet(
+            period_metrics_file=metrics_file,
+            metrics_dir=metrics_dir,
+            json_dir=json_dir,
+            service=service,
+            wallet_id_override=wallet_id,
+            window_size=window_size,
+            var_threshold=var_threshold,
+        )
+        if summary.get("n_tx", 0) >= min_tx:
+            log_report["wallets"].append(summary)
+
+    return log_report
+
+
+# _________________________________________________________________________________________________
+
+
+def save_log(log_file_path, log_report):
+    """
+    Save the log report to a JSON file.
+
+    Args:
+        log_file_path (str): The path to the log file.
+        log_report (dict): The log report to save.
+    """
+    if log_report["wallets"]:
+        with open(log_file_path, "w", encoding="utf-8") as log_file:
+            json.dump(log_report, log_file, indent=4)
+
+
+# _________________________________________________________________________________________________
+
+
+def run_rolling_window_analysis(
+    service,
+    metrics_dir,
+    json_dir,
+    log_dir,
+    min_transactions=1000,
+    window_size=10,
+    var_threshold=10,
+):
+    """
+    Execute rolling window analysis for all metric files in the specified
+    service directory.
+
+    Args:
+        service (str): The service name.
+        min_transactions (int, optional): Minimum number of transactions to
+        consider a wallet.
+        window_size (int, optional): Size of the rolling window.
+        var_threshold (float, optional): Threshold for low variance.
+    """
+
+    for metrics_file in list_metrics_files(metrics_dir):
+        print(f"\nAnalisi periodo: {metrics_file}")
+
+        log_file_path = build_log_file_path(log_dir, metrics_file)
+
+        if should_skip_analysis(log_file_path, min_transactions):
+            print(f" -> Log già presente {metrics_file}")
+            continue
+
+        log_report = analyze_wallets_for_file(
+            metrics_file,
+            metrics_dir,
+            json_dir,
+            service,
+            window_size,
+            var_threshold,
+            min_transactions,
+        )
+        save_log(log_file_path, log_report)
+
+    print(f"\nAnalisys complete. Log saved in {log_dir}.")

@@ -1,10 +1,19 @@
+"""
+Gambling strategy detection module.
+Detects patterns such as Martingale, d'Alembert, and flat betting in wallet
+transactions using pandas and numpy for data manipulation and analysis.
+"""
+
+import os
+import json
 import pandas as pd
 import numpy as np
-import os
+from Scripts.rolling_analisys import load_wallet_bets
 
 
 def detect_martingale(df_txs_wallet, tol=0.05, min_prev_amount=0.00001):
-    """Detect Martingale betting strategy patterns in the wallet transactions.
+    """
+    Detect Martingale betting strategy patterns in the wallet transactions.
 
     Args:
         df_txs_wallet (pd.DataFrame): DataFrame containing wallet transaction data.
@@ -52,11 +61,12 @@ def detect_martingale(df_txs_wallet, tol=0.05, min_prev_amount=0.00001):
     }
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
-def detect_dAlembert(df_txs_wallet, tol=0.01, min_prev_amount=1e-12):
-    """Detect d'Alembert betting strategy patterns in the wallet transactions.
+def detect_dAlembert(df_txs_wallet, tol=0.01):
+    """
+    Detect d'Alembert betting strategy patterns in the wallet transactions.
 
     Args:
         df_txs_wallet (pd.DataFrame): DataFrame containing wallet transaction data.
@@ -103,7 +113,7 @@ def detect_dAlembert(df_txs_wallet, tol=0.01, min_prev_amount=1e-12):
     }
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def detect_flat_betting(df_txs_wallet, tol=0.01):
@@ -152,7 +162,7 @@ def detect_flat_betting(df_txs_wallet, tol=0.01):
     }
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def max_consecutive_true(mask):
@@ -172,3 +182,119 @@ def max_consecutive_true(mask):
     ends = np.where(diff == -1)[0]
     lengths = ends - starts
     return int(lengths.max()) if lengths.size else 0
+
+
+# _________________________________________________________________________________________________
+
+
+def load_selected_wallets(logs_dir, threshold):
+    """
+    Load wallets from log files that meet a low variance threshold.
+
+    Args:
+        logs_dir (str): Path to the directory containing log JSON files.
+        threshold (float): Minimum percentage of low-variance windows for a wallet
+        to be selected.
+
+    Returns:
+        dict: A dictionary where keys are log file names (without extension) and
+        values are lists of wallet IDs that meet the threshold.
+    """
+    selected_wallets = {}
+    for log_file in os.listdir(logs_dir):
+        if not log_file.endswith(".json"):
+            continue
+        log_path = os.path.join(logs_dir, log_file)
+        with open(log_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        df_log = pd.DataFrame(data["wallets"])
+        mask = df_log["percent_low_var_windows"] >= threshold
+        df_log = df_log[mask]
+        key = log_file.split(".")[0]
+        selected_wallets[key] = df_log["wallet_id"].tolist()
+    return selected_wallets
+
+
+# _________________________________________________________________________________________________
+
+
+def analyze_wallet(wallet_id, data):
+    """
+    Analyze the betting patterns of a wallet using different strategies.
+
+    This function loads all transactions for a given wallet, then applies
+    detection methods for Martingale, d'Alembert, and flat betting patterns.
+    It returns a dictionary summarizing the wallet's activity and the results
+    of each detection method.
+
+    Args:
+        wallet_id (str): The unique identifier of the wallet to analyze.
+        data (list[dict]): The dataset containing transaction information.
+
+    Returns:
+        dict or None: A dictionary containing the calculated metrics in the modules
+    """
+    txs_wallet = load_wallet_bets(wallet_id, data)
+    if not txs_wallet:
+        print(f"Wallet {wallet_id} has no transactions. Skipping.")
+        return None
+    df_txs_wallet = pd.DataFrame(txs_wallet)
+    martingale_results = detect_martingale(df_txs_wallet)
+    d_alembert_results = detect_dAlembert(df_txs_wallet)
+    flat_results = detect_flat_betting(df_txs_wallet)
+    return {
+        "wallet_id": wallet_id,
+        "n_tx": len(txs_wallet),
+        **martingale_results,
+        **d_alembert_results,
+        **flat_results,
+    }
+
+
+# _________________________________________________________________________________________________
+
+
+def analyze_period(period, wallets, results_dir, dir_chunks):
+    """
+    Analyze the wallets of a given period and save the results as JSON files.
+
+    Args:
+        period (str): The time period identifier (e.g., chunk name).
+        wallets (list[str]): List of wallet IDs to analyze.
+        results_dir (str): Directory where results JSON files will be saved.
+        dir_chunks (str): Directory containing the transaction chunk files.
+    """
+    json_file_path = os.path.join(dir_chunks, f"{period}.json")
+    with open(json_file_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    period_results = []
+    for wallet_id in wallets:
+        result = analyze_wallet(wallet_id, data)
+        if result:
+            period_results.append(result)
+
+    results_file_path = os.path.join(results_dir, f"{period}_bet_analysis.json")
+    os.makedirs(results_dir, exist_ok=True)
+    with open(results_file_path, "w", encoding="utf-8") as f:
+        json.dump(period_results, f, indent=4)
+
+
+# _________________________________________________________________________________________________
+
+
+def run_gambling_detection(logs_dir, results_dir, dir_chunks, threshold=0.50):
+    """
+    Run gambling detection analysis on selected wallets.
+
+    Args:
+        logs_dir (str): Directory containing log files with selected wallets.
+        results_dir (str): Directory to save the analysis results.
+        dir_chunks (str): Directory containing chunk JSON files.
+        threshold (float): Threshold for selecting wallets based
+        on low variance windows.
+    """
+    selected_wallets = load_selected_wallets(logs_dir, threshold)
+    for period, wallets in selected_wallets.items():
+        analyze_period(period, wallets, results_dir, dir_chunks)
+    print(f"Gambling analysis completed. Results saved in {results_dir}.")

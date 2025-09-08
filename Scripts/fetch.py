@@ -1,10 +1,15 @@
-import requests
+"""
+This module fetch wallet transactions and addresses from WalletExplorer API
+and saves the data in chunks to be better manipulated
+"""
+
+import os
 import json
 import time
-import os
+import requests
 from tqdm import tqdm
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
@@ -18,17 +23,17 @@ def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
         output_dir (str): The directory where the JSON file will be saved.
     """
     file_path = os.path.join(output_dir, f"{wallet_id}_transactions_{file_index}.json")
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         json.dump(transactions, f, indent=4)
     print(f"Saved chunk {file_index} with {len(transactions)} transactions.")
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
     """
-    Fetches all transactions associated with a given wallet ID from the WalletExplorer API.
+    Fetches all transactions associated with a wallet ID from the WalletExplorer API.
 
     Args:
         wallet_id (str): The wallet ID to fetch transactions for.
@@ -42,10 +47,11 @@ def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
     count = 100
     headers = {
         "User-Agent": "Mozilla/5.0"
-        + "(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+        + "(Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
+        + "Chrome/58.0.3029.110 Safari/537.3"
     }
     chunk_size = 100_000
-    file_index = 11
+    file_index = 1
     all_transactions = []
     os.makedirs(output_dir, exist_ok=True)
 
@@ -74,8 +80,8 @@ def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
             print("Request timeout. Retrying in 5 seconds...")
             time.sleep(5)
             continue
-        except Exception as e:
-            print(f"Unexpected error: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"Unexpected requests error: {e}")
             break
 
         data = response.json()
@@ -108,12 +114,12 @@ def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
     return all_transactions
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def fetch_first_100_addresses(wallet_id, output_dir):
     """
-    Fetches the first 100 addresses associated with a given wallet ID and saves them to a JSON file.
+    Fetches the first 100 addresses of a given wallet ID and saves them to a JSON file.
 
     Args:
         wallet_id (str): The wallet ID to fetch addresses for.
@@ -124,7 +130,7 @@ def fetch_first_100_addresses(wallet_id, output_dir):
     """
     base_url = "https://www.walletexplorer.com/api/1/wallet-addresses"
     url = f"{base_url}?wallet={wallet_id}&from=0&count=100"
-    response = requests.get(url)
+    response = requests.get(url, timeout=10)
 
     if response.status_code == 429:
         print("Rate limit exceeded. Waiting for 5 seconds...")
@@ -141,13 +147,13 @@ def fetch_first_100_addresses(wallet_id, output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
     # Save the JSON response to a file
-    with open(f"{output_dir}/{wallet_id}_addresses.json", "w") as f:
+    with open(f"{output_dir}/{wallet_id}_addresses.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
     return data
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def save_addresses_chunk(addresses, wallet_id, label, file_index, output_dir):
@@ -169,12 +175,12 @@ def save_addresses_chunk(addresses, wallet_id, label, file_index, output_dir):
         "addresses": addresses,
     }
     file_path = os.path.join(output_dir, f"{wallet_id}_addresses_{file_index}.json")
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         json.dump(chunk_data, f, indent=4)
     print(f"Saved chunk {file_index} with {len(addresses)} addresses.")
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
@@ -220,8 +226,8 @@ def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
             print("Request timeout. Retrying in 5 seconds...")
             time.sleep(5)
             continue
-        except Exception as e:
-            print(f"Unexpected error: {e}")
+        except requests.exceptions.RequestException as e:
+            print(f"Unexpected requests error: {e}")
             break
 
         data = response.json()
@@ -251,6 +257,3 @@ def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
 
     pbar.close()
     print(f"Completed address download for {wallet_id}\n")
-
-
-# _______________________________________________________________________________________________________________________

@@ -1,10 +1,15 @@
-import json
-import pandas as pd
+"""
+Module for ranking wallets based on various metrics.
+Metrics are normalized and combined into a score.
+"""
+
 import os
+import json
 from datetime import datetime, timezone
 from collections import Counter
+import pandas as pd
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def process_wallet_dataframe(
@@ -24,7 +29,7 @@ def process_wallet_dataframe(
     """
     df = build_wallets_dataframe(
         wallets_info_path=wallets_info_path,
-        directory_addresses=directory_addresses,
+        dir_addresses=directory_addresses,
         known_services=known_services,
     )
 
@@ -40,10 +45,10 @@ def process_wallet_dataframe(
     return df
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
-def build_wallets_dataframe(wallets_info_path, directory_addresses, known_services):
+def build_wallets_dataframe(wallets_info_path, dir_addresses, known_services):
     """
     Build the initial dataframe with wallet statistics.
 
@@ -66,7 +71,7 @@ def build_wallets_dataframe(wallets_info_path, directory_addresses, known_servic
         ]
     )
 
-    with open(wallets_info_path, "r") as f:
+    with open(wallets_info_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     for wallet in data:
@@ -78,10 +83,12 @@ def build_wallets_dataframe(wallets_info_path, directory_addresses, known_servic
         )
         notoriety = 1 if wallet_id in known_services else 0
 
-        with open(f"{directory_addresses}/{wallet_id}_addresses.json", "r") as f:
+        file_path = os.path.join(dir_addresses, f"{wallet_id}_addresses.json")
+        with open(file_path, "r", encoding="utf-8") as f:
             addresses_data = json.load(f)
+            first_100_addresses = addresses_data["addresses"][:100]
             first_100_transactions = sum(
-                address["incoming_txs"] for address in addresses_data["addresses"][:100]
+                address["incoming_txs"] for address in first_100_addresses
             )
 
         df.loc[len(df)] = {
@@ -96,19 +103,21 @@ def build_wallets_dataframe(wallets_info_path, directory_addresses, known_servic
     return df
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def get_wallet_activity_stats(
     wallet_id, directory_transactions, coverage_threshold=0.8
 ):
     """
-    Return first and last transaction date, peak year and activity concentration span for a wallet.
+    Return first and last transaction date, peak year
+    and activity concentration span for a wallet.
 
     Args:
         wallet_id (str): Wallet ID.
-        directory_transactions (str): Directory containing transaction JSON files.
-        coverage_threshold (float): Target coverage fraction for concentrated activity window (default 80%).
+        directory_transactions (str): Dir containing transaction JSON files.
+        coverage_threshold (float): Target coverage fraction for concentrated
+        activity window (default 80%).
 
     Returns:
         tuple: (first_date, last_date, peak_year, activity_span_years)
@@ -116,15 +125,17 @@ def get_wallet_activity_stats(
     timestamps = []
 
     for file_name in os.listdir(directory_transactions):
-        if file_name == f"{wallet_id}_transactions.json" or file_name.startswith(
-            f"{wallet_id}_transactions_"
-        ):
-            print(file_name)
-            with open(os.path.join(directory_transactions, file_name), "r") as f:
+        is_main_file = file_name == f"{wallet_id}_transactions.json"
+        is_chunked_file = file_name.startswith(f"{wallet_id}_transactions_")
+        if is_main_file or is_chunked_file:
+            file_path = os.path.join(directory_transactions, file_name)
+            with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 if isinstance(data, dict) and "transactions" in data:
                     timestamps.extend(
-                        tx["time"] for tx in data["transactions"] if "time" in tx
+                        tx["time"]
+                        for tx in data["transactions"]
+                        if "time" in tx  # some txs might lack a timestamp
                     )
 
     if not timestamps:
@@ -136,7 +147,7 @@ def get_wallet_activity_stats(
     year_counts = Counter(years)
     total_txs = sum(year_counts.values())
 
-    peak_year, peak_count = year_counts.most_common(1)[0]
+    peak_year, _ = year_counts.most_common(1)[0]
 
     span = 0
     while True:
@@ -152,16 +163,17 @@ def get_wallet_activity_stats(
     return first_date, last_date, peak_year, span
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def calculate_wallet_activity(df_wallets, directory_transactions):
     """
-    Add activity stats columns (first/last tx date, peak year, year variance) to an existing wallets dataframe.
+    Add activity stats columns (first/last tx date, peak year, year variance)
+    to an existing wallets dataframe.
 
     Args:
         df_wallets (pd.DataFrame): DataFrame with wallet IDs.
-        directory_transactions (str): Directory containing transaction JSON files.
+        directory_transactions (str): Dir containing transaction JSON files.
 
     Returns:
         pd.DataFrame: Updated DataFrame.
@@ -172,9 +184,12 @@ def calculate_wallet_activity(df_wallets, directory_transactions):
     activity_spans = []
 
     for wallet_id in df_wallets["wallet_id"]:
-        first_date, last_date, peak_year, activity_span = get_wallet_activity_stats(
-            wallet_id, directory_transactions
-        )
+        (
+            first_date,
+            last_date,
+            peak_year,
+            activity_span,
+        ) = get_wallet_activity_stats(wallet_id, directory_transactions)
         first_dates.append(first_date)
         last_dates.append(last_date)
         peak_years.append(peak_year)
@@ -188,7 +203,7 @@ def calculate_wallet_activity(df_wallets, directory_transactions):
     return df_wallets
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def normalize_columns(df, columns):
@@ -209,7 +224,7 @@ def normalize_columns(df, columns):
     return df
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def calculate_scores(df, w1, w2, w3, w4, w5):
@@ -234,4 +249,4 @@ def calculate_scores(df, w1, w2, w3, w4, w5):
     return df
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________

@@ -1,25 +1,29 @@
-import matplotlib.pyplot as plt
-import pandas as pd
+"""
+This module provides functions to analyze and compute metrics for wallet
+transactions within specified chunks.
+It includes functionality to build dataframes with wallet metrics,
+calculate time variance statistics, and save the results to Excel files.
+"""
+
 import os
 import json
+import pandas as pd
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir):
     """
     Analyze metrics for a specific chunk of transactions.
-    This function processes a chunk file, builds a DataFrame with wallet metrics,
-    calculates average amounts, net balances, and time variance statistics for each wallet.
+    This function processes a chunk file, builds a DataFrame with wallet
+    metrics, calculates average amounts, net balances, and
+    time variance statistics for each wallet.
     It saves the results to an Excel file in the specified output directory.
 
     Args:
         chunk_to_process (str): The specific chunk file to process.
-        directory_chunks (str): Directory containing the chunked transaction data.
-        output_dir (str): Directory to save the metrics results.
-
-    Returns:
-        None
+        directory_chunks (str): Dir containing the chunked transaction data.
+        output_dir (str): Dir to save the metrics results.
     """
     chunk_file = f"{chunk_to_process}.json"
     metrics_file = os.path.join(output_dir, f"{chunk_file}_metrics.xlsx")
@@ -44,31 +48,26 @@ def analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir):
         wallet_df["total_btc_received"] - wallet_df["total_btc_sent"]
     )
 
-    transactions = load_chunk_transactions(os.path.join(directory_chunks, chunk_file))
+    chunk_path = os.path.join(directory_chunks, chunk_file)
+    transactions = load_chunk_transactions(chunk_path)
     if not transactions:
         print(f"No transactions found in {chunk_file}.")
         return
 
+    columns_to_update = [
+        "time_variance",
+        "mean_time_diff",
+        "std_dev_time_diff",
+        "min_time_diff",
+        "max_time_diff",
+    ]
+
     for wallet_id in wallet_df["wallet_id"]:
         time_metrics = calculate_time_variance(wallet_id, transactions)
         if time_metrics:
-            for key, value in time_metrics.items():
-                wallet_df.loc[wallet_df["wallet_id"] == wallet_id, key] = value
-            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "time_variance"] = (
-                time_metrics["time_variance"]
-            )
-            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "mean_time_diff"] = (
-                time_metrics["mean_time_diff"]
-            )
-            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "std_dev_time_diff"] = (
-                time_metrics["std_dev_time_diff"]
-            )
-            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "min_time_diff"] = (
-                time_metrics["min_time_diff"]
-            )
-            wallet_df.loc[wallet_df["wallet_id"] == wallet_id, "max_time_diff"] = (
-                time_metrics["max_time_diff"]
-            )
+            for col in columns_to_update:
+                mask = wallet_df["wallet_id"] == wallet_id
+                wallet_df.loc[mask, col] = time_metrics[col]
 
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -77,7 +76,7 @@ def analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir):
     print(f"Metrics saved for {chunk_to_process}.")
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
@@ -89,52 +88,41 @@ def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
         chunk_to_process (str): The specific chunk file to process.
 
     Returns:
-        pd.DataFrame: DataFrame with wallet IDs and their transaction counts (received/sent).
+        pd.DataFrame: DataFrame with wallet IDs and their transaction counts
+        (received/sent).
     """
     records = []
-
     chunk_path = os.path.join(directory_input, chunk_to_process)
+
     if os.path.exists(chunk_path):
-        with open(chunk_path, "r") as f:
+        with open(chunk_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         wallet_stats = {}
 
         for transaction in data:
-            if transaction["type"] == "received":
-                wallet_id = transaction["wallet_id"]
-                amount = transaction["amount"]
-                stats = wallet_stats.get(
-                    wallet_id,
-                    {
-                        "in_degree": 0,
-                        "out_degree": 0,
-                        "total_btc_received": 0,
-                        "total_btc_sent": 0,
-                    },
-                )
+            wallet_id, amount, tx_type = parse_transaction(transaction)
+            if not tx_type:
+                continue
+
+            stats = wallet_stats.get(
+                wallet_id,
+                {
+                    "in_degree": 0,
+                    "out_degree": 0,
+                    "total_btc_received": 0,
+                    "total_btc_sent": 0,
+                },
+            )
+
+            if tx_type == "received":
                 stats["in_degree"] += 1
                 stats["total_btc_received"] += amount
-                wallet_stats[wallet_id] = stats
-            elif transaction["type"] == "sent":
-                if transaction["outputs"]:
-                    wallet_id = transaction["outputs"][0]["wallet_id"]
-                    amount = transaction["outputs"][0]["amount"]
-                else:
-                    wallet_id = "Unknown"
-                    amount = 0
-                stats = wallet_stats.get(
-                    wallet_id,
-                    {
-                        "in_degree": 0,
-                        "out_degree": 0,
-                        "total_btc_received": 0,
-                        "total_btc_sent": 0,
-                    },
-                )
+            elif tx_type == "sent":
                 stats["out_degree"] += 1
                 stats["total_btc_sent"] += amount
-                wallet_stats[wallet_id] = stats
+
+            wallet_stats[wallet_id] = stats
 
         for wallet_id, stats in wallet_stats.items():
             records.append({"wallet_id": wallet_id, **stats})
@@ -145,7 +133,35 @@ def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
     return df
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
+
+
+def parse_transaction(transaction):
+    """
+    Parse a transaction to extract wallet ID, amount, and type.
+
+    Args:
+        transaction (dict): The transaction data.
+
+    Returns:
+        tuple: A tuple containing the wallet ID, amount, and transaction type.
+    """
+    if transaction["type"] == "received":
+        return transaction["wallet_id"], transaction["amount"], "received"
+
+    if transaction["type"] == "sent":
+        if transaction["outputs"]:
+            return (
+                transaction["outputs"][0]["wallet_id"],
+                transaction["outputs"][0]["amount"],
+                "sent",
+            )
+        return "Unknown", 0, "sent"
+
+    return None, 0, None
+
+
+# _________________________________________________________________________________________________
 
 
 def load_chunk_transactions(chunk_path):
@@ -161,11 +177,11 @@ def load_chunk_transactions(chunk_path):
     if not os.path.exists(chunk_path):
         print(f"Chunk file {chunk_path} does not exist.")
         return []
-    with open(chunk_path, "r") as f:
+    with open(chunk_path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def get_wallet_transactions(wallet_id, transactions):
@@ -183,7 +199,11 @@ def get_wallet_transactions(wallet_id, transactions):
     for tx in transactions:
         if tx["type"] == "received" and tx["wallet_id"] == wallet_id:
             wallet_txs.append(
-                {"time": tx["time"], "amount": tx["amount"], "type": "received"}
+                {
+                    "time": tx["time"],
+                    "amount": tx["amount"],
+                    "type": "received",
+                }
             )
         elif tx["type"] == "sent" and tx["outputs"]:
             if tx["outputs"][0]["wallet_id"] == wallet_id:
@@ -197,7 +217,7 @@ def get_wallet_transactions(wallet_id, transactions):
     return wallet_txs
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def compute_time_differences(wallet_txs):
@@ -208,7 +228,8 @@ def compute_time_differences(wallet_txs):
         wallet_txs (list): List of transactions for a specific wallet.
 
     Returns:
-        list: List of time differences in seconds between consecutive transactions.
+        list: List of time differences in seconds between consecutive
+        transactions.
     """
     if not wallet_txs:
         return []
@@ -226,7 +247,7 @@ def compute_time_differences(wallet_txs):
     return time_diffs
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def compute_time_statistics(time_diffs):
@@ -234,7 +255,8 @@ def compute_time_statistics(time_diffs):
     Compute time variance statistics for a specific wallet in a given chunk.
 
     Args:
-        time_diffs (list): List of time differences in seconds between consecutive transactions.
+        time_diffs (list): List of time differences in seconds between
+        consecutive transactions.
 
     Returns:
         dict: Dictionary containing time variance statistics.
@@ -253,7 +275,7 @@ def compute_time_statistics(time_diffs):
     return stats
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def update_dataframe_with_stats(dataframe, wallet_id, stats):
@@ -271,7 +293,7 @@ def update_dataframe_with_stats(dataframe, wallet_id, stats):
         dataframe.loc[wallet_id, key] = value
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def calculate_time_variance(wallet_id, transactions):
@@ -280,8 +302,11 @@ def calculate_time_variance(wallet_id, transactions):
 
     Args:
         wallet_id (str): The wallet ID to analyze.
-        directory_input (str): Directory containing the chunk files.
-        chunk_to_process (str): The specific chunk file to process.
+        transactions (list): List of all transactions in the chunk.
+
+    Returns:
+        dict: Dictionary containing time variance statistics.
+        None if no transactions found.
     """
     wallet_txs = get_wallet_transactions(wallet_id, transactions)
     if not wallet_txs:
@@ -298,16 +323,21 @@ def calculate_time_variance(wallet_id, transactions):
     return stats
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def calculate_chunk_global_metrics(chunk_file_path, global_metrics_df, chunk_file_name):
     """
-    Calculate global metrics for a chunk and update the global metrics DataFrame.
+    Calculate global metrics for a chunk and update the global metrics
+    DataFrame.
 
     Args:
         chunk_file_path (str): Path to the chunk file.
         global_metrics_df (pd.DataFrame): DataFrame to store global metrics.
+        chunk_file_name (str): Name of the chunk file (without extension).
+
+    Returns:
+        pd.DataFrame: Updated global metrics DataFrame.
     """
     if not os.path.exists(chunk_file_path):
         print(f"Chunk file {chunk_file_path} does not exist.")
@@ -338,5 +368,6 @@ def calculate_chunk_global_metrics(chunk_file_path, global_metrics_df, chunk_fil
         ]
     )
 
-    global_metrics_df = pd.concat([global_metrics_df, new_row], ignore_index=True)
+    to_concat = [global_metrics_df, new_row]
+    global_metrics_df = pd.concat(to_concat, ignore_index=True)
     return global_metrics_df

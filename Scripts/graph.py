@@ -1,10 +1,17 @@
+"""
+This module provides functionality for building and exporting graphs related to wallets
+and their transactions.
+It includes tools for creating wallet graphs and transaction graphs, exporting
+them in formats suitable for analysis (Neo4j), and handling chunked transaction data.
+"""
+
 import os
 import json
 import pandas as pd
 import networkx as nx
-import matplotlib.pyplot as plt
 
-# _______________________________________________________________________________________________________________________
+
+# _________________________________________________________________________________________________
 
 
 def build_graphs_for_wallet(chunk_to_process, directory_chunks, service_node):
@@ -38,7 +45,7 @@ def build_graphs_for_wallet(chunk_to_process, directory_chunks, service_node):
         # )
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def build_wallet_graph_for_chunk(
@@ -61,7 +68,7 @@ def build_wallet_graph_for_chunk(
         print(f"Chunk file {chunk_to_process} does not exist in {base_directory}.")
         return
 
-    with open(chunk_path, "r") as f:
+    with open(chunk_path, "r", encoding="utf-8") as f:
         transactions = json.load(f)
 
     G = nx.MultiDiGraph()
@@ -105,7 +112,7 @@ def build_wallet_graph_for_chunk(
     export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process)
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process):
@@ -142,19 +149,18 @@ def export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process):
     edges_file = os.path.join(output_dir, f"edges_{chunk_base_name}.csv")
     nodes_df.to_csv(nodes_file, index=False)
     edges_df.to_csv(edges_file, index=False)
-    print(
-        f"Graph exported to {output_dir} with {len(G.nodes)} nodes and {len(G.edges)} edges."
-    )
+    print(f"Graph saved with {len(G.nodes)} nodes and {len(G.edges)} edges.")
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def build_txs_graph_for_chunk(
     base_directory, wallet_id, chunk_to_process, output_dir="Data/graphs"
 ):
     """
-    Build a transaction graph for a specific chunk of transactions related to a given wallet ID.
+    Build a transaction graph for a specific chunk of transactions
+    related to a given wallet ID.
 
     Args:
         base_directory (str): Base directory containing the chunked transaction data.
@@ -173,7 +179,7 @@ def build_txs_graph_for_chunk(
 
     G = nx.MultiDiGraph()
 
-    with open(chunk_path, "r") as f:
+    with open(chunk_path, "r", encoding="utf-8") as f:
         transactions = json.load(f)
 
     list_of_transactions = []
@@ -239,7 +245,7 @@ def build_txs_graph_for_chunk(
     export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process)
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process):
@@ -252,7 +258,6 @@ def export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process):
         wallet_id (str): The wallet ID being processed.
         chunk_to_process (str): The specific chunk file being processed.
     """
-    pass
     nodes_data = []
     edges_data = []
 
@@ -284,9 +289,7 @@ def export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process):
     nodes_df.to_csv(nodes_file, index=False)
     edges_df.to_csv(edges_file, index=False)
 
-    print(
-        f"Transaction graph for wallet {wallet_id} exported to {output_dir} with {len(G.nodes)} nodes and {len(G.edges)} edges."
-    )
+    print(f"Transaction graph for wallet {wallet_id} saved")
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________

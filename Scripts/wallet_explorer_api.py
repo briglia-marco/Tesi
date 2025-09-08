@@ -1,9 +1,13 @@
-import requests
+"""
+Module to interact with the WalletExplorer website with API-like functions.
+"""
+
 import json
 import os
+import requests
 from bs4 import BeautifulSoup
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def get_wallet_ids(wallet_ids):
@@ -18,7 +22,7 @@ def get_wallet_ids(wallet_ids):
         list: A list of wallet IDs associated with gambling services.
     """
     base_url = "https://www.walletexplorer.com/"
-    response = requests.get(base_url)
+    response = requests.get(base_url, timeout=10)
     soup = BeautifulSoup(response.text, "html.parser")
 
     table = soup.find("table", class_="serviceslist")
@@ -31,35 +35,35 @@ def get_wallet_ids(wallet_ids):
     return wallet_ids
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def download_first_100_addresses(
-    directory_addresses, get_wallet_ids, fetch_first_100_addresses
+    directory_addresses, get_wallet_ids_func, fetch_first_100_addresses
 ):
     """
     Download the first 100 addresses for each wallet in the given directory.
-    If no wallets are present, fetch wallet IDs using get_wallet_ids.
+    If no wallets are present, fetch wallet IDs using get_wallet_ids_func.
 
     Args:
-        directory_addresses (str): Directory where the address files will be saved.
-        get_wallet_ids (function): Function to fetch wallet IDs.
-        fetch_first_100_addresses (function): Function to fetch the first 100 addresses for a wallet.
-
-    Returns:
-        None
+        directory_addresses (str): Directory where the address files will be
+        saved.
+        get_wallet_ids_func (function): Function to fetch wallet IDs.
+        fetch_first_100_addresses (function): Function to fetch the first 100
+        addresses for a wallet.
     """
     if (
         not os.path.exists(directory_addresses)
         or len(os.listdir(directory_addresses)) == 0
     ):
         wallet_ids = []
-        get_wallet_ids(wallet_ids)
+        get_wallet_ids_func(wallet_ids)
     else:
         wallet_ids = [f.split("_")[0] for f in os.listdir(directory_addresses)]
 
     for wallet_id in wallet_ids:
-        address_file = os.path.join(directory_addresses, f"{wallet_id}_addresses.json")
+        file_name = f"{wallet_id}_addresses.json"
+        address_file = os.path.join(directory_addresses, file_name)
         if not os.path.exists(address_file):
             fetch_first_100_addresses(wallet_id, directory_addresses)
         else:
@@ -68,7 +72,7 @@ def download_first_100_addresses(
     print("First 100 addresses for selected wallets downloaded.")
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def get_transaction_count(wallet_id):
@@ -83,7 +87,7 @@ def get_transaction_count(wallet_id):
     """
 
     base_url = "https://www.walletexplorer.com/"
-    response = requests.get(f"{base_url}/wallet/{wallet_id}")
+    response = requests.get(f"{base_url}/wallet/{wallet_id}", timeout=10)
     if response.status_code != 200:
         print(f"Error: {response.status_code}")
         return 0
@@ -99,7 +103,7 @@ def get_transaction_count(wallet_id):
     return 0
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def get_all_wallets_info(
@@ -107,11 +111,12 @@ def get_all_wallets_info(
     output_file="Data/processed/info/wallets_info.json",
 ):
     """
-    Function to get wallet information for all wallets found in the specified directory.
+    Function to get wallet information for all wallets found in the directory.
 
     Args:
         directory (str): The directory where the address files are stored.
-        output_file (str): The path to the output file where the wallets information will be saved.
+        output_file (str): The path to the output file where the wallets
+        information will be saved.
 
     Returns:
         list: A list of dictionaries containing wallet information.
@@ -124,8 +129,8 @@ def get_all_wallets_info(
     for file_name in os.listdir(directory):
         if file_name.endswith("_addresses.json"):
             wallet_id = file_name.replace("_addresses.json", "")
-
-            with open(os.path.join(directory, file_name), "r") as f:
+            file_path = os.path.join(directory, file_name)
+            with open(file_path, "r", encoding="utf-8") as f:
                 addresses = json.load(f)
                 if not addresses.get("found", False):
                     print(f"Error: Wallet {wallet_id} not found.")
@@ -142,7 +147,7 @@ def get_all_wallets_info(
             data.append(wallet_info)
             print(f"Added info for {wallet_id}")
 
-    with open(output_file, "w") as f:
+    with open(output_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
     print(f"Saved wallet info to {output_file}")
@@ -150,4 +155,4 @@ def get_all_wallets_info(
     return data
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________

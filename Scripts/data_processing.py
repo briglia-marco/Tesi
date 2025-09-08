@@ -1,57 +1,68 @@
+"""
+Module for downloading, processing, and chunking wallet addresses
+and transactions from WalletExplorer. Functions include merging JSON
+files, splitting them into smaller chunks, and checking file existence.
+"""
+
 import os
 import json
-import pandas as pd
-from Scripts.fetch import *
-from Scripts.ranking import *
-from tqdm import tqdm
-from datetime import datetime
+from Scripts.fetch import fetch_all_addresses, fetch_wallet_transactions
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def download_wallet_addresses(wallet_ids, directory_raw_addresses):
     """
-    Download all addresses associated with a list of wallet IDs by querying the WalletExplorer API.
-    Downloads are skipped if the first address chunk already exists in the target directory.
+    Download all addresses associated with a list of wallet IDs by querying the
+    WalletExplorer API. Downloads are skipped if the first address chunk already exists
+    in the target directory.
 
     Args:
         wallet_ids (list): List of wallet IDs to fetch addresses for.
-        directory_raw_addresses (str): Directory where the address JSON files will be saved.
+        directory_raw_addresses (str): Dir where the address JSON files will be saved.
     """
     for wallet_id in wallet_ids:
-        address_file = f"{directory_raw_addresses}/{wallet_id}_addresses_1.json"
-        if not os.path.exists(address_file):
-            print(f"Downloading all addresses for {wallet_id}...")
-            fetch_all_addresses(wallet_id, directory_raw_addresses)
+        if wallet_id in ("SatoshiDice.com-original", "BitZillions.com"):
+            address_file = f"{directory_raw_addresses}/{wallet_id}_addresses_1.json"
+            if not os.path.exists(address_file):
+                print(f"Downloading all addresses for {wallet_id}...")
+                fetch_all_addresses(wallet_id, directory_raw_addresses)
 
 
-# ________________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def download_wallet_transactions(wallet_ids, directory_raw_transactions):
     """
-    Download all transactions associated with a list of wallet IDs by querying the WalletExplorer API.
-    Downloads are skipped if the first transaction chunk already exists in the target directory.
+    Download all addresses associated with a list of wallet IDs by querying the
+    WalletExplorer API. Downloads are skipped if the first address chunk already exists
+    in the target directory.
 
     Args:
         wallet_ids (list): List of wallet IDs to fetch transactions for.
-        directory_raw_transactions (str): Directory where the transaction JSON files will be saved.
+        directory_raw_transactions (str): Dir where the transaction files will be saved.
     """
     for wallet_id in wallet_ids:
-        tx_file = f"{directory_raw_transactions}/{wallet_id}_transactions_1.json"
-        if not os.path.exists(tx_file):
-            print(f"Downloading all transactions for {wallet_id}...")
-            fetch_wallet_transactions(wallet_id, directory_raw_transactions)
+        if wallet_id in ("SatoshiDice.com-original", "BitZillions.com"):
+            tx_file = f"{directory_raw_transactions}/{wallet_id}_transactions_1.json"
+            if not os.path.exists(tx_file):
+                print(f"Downloading all transactions for {wallet_id}...")
+                fetch_wallet_transactions(wallet_id, directory_raw_transactions)
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def merge_wallet_json_files(
-    wallet_id, directory_input, directory_output, output_suffix, data_field, count_field
+    wallet_id,
+    directory_input,
+    directory_output,
+    output_suffix,
+    data_field,
+    count_field,
 ):
     """
-    Merge all JSON files for a given wallet ID containing either addresses or transactions
+    Merge all JSON files for a given wallet containing either addresses or transactions
     into a single JSON file. The data_field and count_field are customizable.
     Supports both dict-based and pure list JSON files.
 
@@ -60,7 +71,7 @@ def merge_wallet_json_files(
         directory_input (str): Directory containing the input JSON files.
         directory_output (str): Directory to save the merged output file.
         output_suffix (str): Suffix for the output file name.
-        data_field (str): The field in the JSON to merge (e.g., "addresses" or "transactions").
+        data_field (str): The field in the JSON to merge.
         count_field (str): The field to count items in the JSON.
     """
     merged_data = {
@@ -80,7 +91,7 @@ def merge_wallet_json_files(
 
     for file_name in files:
         file_path = os.path.join(directory_input, file_name)
-        with open(file_path, "r") as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         if isinstance(data, dict) and data_field in data:
@@ -95,13 +106,13 @@ def merge_wallet_json_files(
     os.makedirs(directory_output, exist_ok=True)
     output_file_name = f"{wallet_id}_{output_suffix}.json"
     output_path = os.path.join(directory_output, output_file_name)
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         json.dump(merged_data, f, indent=4)
 
     print(f"Merged file saved to {output_path}")
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def split_json_file(
@@ -113,19 +124,19 @@ def split_json_file(
     suffix="addresses",
 ):
     """
-    Split a merged JSON file containing either addresses or transactions into multiple JSON files
-    each containing up to chunk_size objects.
+    Split a merged JSON file containing either addresses or transactions
+    into multiple JSON files each containing up to chunk_size objects.
 
     Args:
         wallet_id (str): Wallet ID of the file to split.
         directory_input (str): Directory containing the merged JSON file.
         directory_output (str): Directory where split files will be saved.
-        data_field (str): Key name of the list in the JSON (e.g. 'addresses' or 'transactions').
+        data_field (str): Key name of the list in the JSON.
         chunk_size (int, optional): Number of objects per file. Default is 100,000.
-        suffix (str, optional): Suffix for the output file ('addresses' or 'transactions').
+        suffix (str, optional): Suffix for the output file.
     """
     input_path = os.path.join(directory_input, f"{wallet_id}_{suffix}.json")
-    with open(input_path, "r") as f:
+    with open(input_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     items = data.get(data_field, [])
@@ -139,7 +150,7 @@ def split_json_file(
             directory_output, f"{wallet_id}_{suffix}_{file_index}.json"
         )
 
-        with open(output_path, "w") as f_out:
+        with open(output_path, "w", encoding="utf-8") as f_out:
             json.dump(chunk, f_out, indent=4)
 
         print(f"Saved {len(chunk)} items to {output_path}")
@@ -148,7 +159,7 @@ def split_json_file(
     print(f"Splitting complete for {wallet_id} ({suffix})")
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
 
 
 def split_all_wallet_files(
@@ -193,4 +204,21 @@ def split_all_wallet_files(
     print("\nAll files split successfully.")
 
 
-# _______________________________________________________________________________________________________________________
+# _________________________________________________________________________________________________
+
+
+def all_files_exist(folder: str, wallet_ids: list[str]) -> bool:
+    """
+    Check if all expected JSON files for the given wallet IDs exist in the directory.
+
+    Args:
+        folder (str): The directory to check for the files.
+        wallet_ids (list): List of wallet IDs to check.
+    Returns:
+        bool: True if all files exist, False otherwise.
+    """
+    for wid in wallet_ids:
+        expected_file = os.path.join(folder, f"{wid}.json")
+        if not os.path.exists(expected_file):
+            return False
+    return True
