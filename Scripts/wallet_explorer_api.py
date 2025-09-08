@@ -6,11 +6,12 @@ import json
 import os
 import requests
 from bs4 import BeautifulSoup
+from Scripts.fetch import fetch_first_100_addresses
 
 # _________________________________________________________________________________________________
 
 
-def get_wallet_ids(wallet_ids):
+def get_wallet_ids(wallet_ids: list) -> list:
     """
     Function to get the wallet IDs from the WalletExplorer website.
     It scrapes the website to find the gambling services and their wallet IDs.
@@ -31,6 +32,9 @@ def get_wallet_ids(wallet_ids):
         if td.h3.text == "Gambling:":
             for i in td.find_all("li"):
                 wallet_id = i.a.text
+                if wallet_id == "SatoshiDice.com":
+                    wallet_id2 = f"{wallet_id}-original"
+                    wallet_ids.append(wallet_id2)
                 wallet_ids.append(wallet_id)
     return wallet_ids
 
@@ -38,9 +42,7 @@ def get_wallet_ids(wallet_ids):
 # _________________________________________________________________________________________________
 
 
-def download_first_100_addresses(
-    directory_addresses, get_wallet_ids_func, fetch_first_100_addresses
-):
+def download_first_100_addresses(directory_addresses: str) -> None:
     """
     Download the first 100 addresses for each wallet in the given directory.
     If no wallets are present, fetch wallet IDs using get_wallet_ids_func.
@@ -57,7 +59,7 @@ def download_first_100_addresses(
         or len(os.listdir(directory_addresses)) == 0
     ):
         wallet_ids = []
-        get_wallet_ids_func(wallet_ids)
+        get_wallet_ids(wallet_ids)
     else:
         wallet_ids = [f.split("_")[0] for f in os.listdir(directory_addresses)]
 

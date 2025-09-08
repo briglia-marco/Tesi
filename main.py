@@ -5,12 +5,10 @@ analyzing, and detecting gambling patterns in cryptocurrency wallet data.
 
 import os
 import pandas as pd
-from Scripts.fetch import fetch_first_100_addresses
 from Scripts.ranking import process_wallet_dataframe
 from Scripts.graph import build_graphs_for_wallet
 from Scripts.wallet_explorer_api import (
     download_first_100_addresses,
-    get_wallet_ids,
     get_all_wallets_info,
 )
 from Scripts.data_processing import (
@@ -37,7 +35,10 @@ from Scripts.gambling_analysis import (
 if __name__ == "__main__":
     # DOWNLOAD DATA
 
+    # SatoshiDice.com-original (100000, 1000), BitZillions.com (10000, 200)
     SERVICE = "SatoshiDice.com-original"
+    TRANSACTIONS_FOR_CHUNK_THRESHOLD = 100000
+    MIN_TRANSACTIONS_TO_ANALYZE_WALLET = 1000
 
     DIRECTORY_RAW_ADDRESSES = "Data/raw/addresses"
     DIRECTORY_RAW_TRANSACTIONS = "Data/raw/transactions"
@@ -49,15 +50,15 @@ if __name__ == "__main__":
     DIRECTORY_CHUNKS = f"{SERVICE_DIR}/3_months"
     DIRECTORY_XLSX = f"{SERVICE_DIR}/xlsx"
 
+    os.makedirs(DIRECTORY_PROCESSED_100_ADDRESSES, exist_ok=True)
     if len(os.listdir(DIRECTORY_PROCESSED_100_ADDRESSES)) == 0:
         download_first_100_addresses(
             directory_addresses=DIRECTORY_PROCESSED_100_ADDRESSES,
-            get_wallet_ids_func=get_wallet_ids,
-            fetch_first_100_addresses=fetch_first_100_addresses,
         )
     else:
         print("First 100 addresses are already downloaded.")
 
+    os.makedirs(DIRECTORY_PRO_INFO, exist_ok=True)
     if len(os.listdir(DIRECTORY_PRO_INFO)) == 0:
         get_all_wallets_info(
             directory=DIRECTORY_PROCESSED_100_ADDRESSES,
@@ -87,7 +88,7 @@ if __name__ == "__main__":
     ]
 
     df_wallets = process_wallet_dataframe(
-        wallets_info_path="Data/processed/info/wallets_info.json",
+        wallets_info_path=f"{DIRECTORY_PRO_INFO}/wallets_info.json",
         directory_addresses=DIRECTORY_PROCESSED_100_ADDRESSES,
         known_services=known_services,
         w1=w1,
@@ -99,17 +100,21 @@ if __name__ == "__main__":
 
     wallet_ids = df_wallets["wallet_id"].iloc[:15].tolist()
 
+    os.makedirs(DIRECTORY_RAW_ADDRESSES, exist_ok=True)
     if not all_files_exist(DIRECTORY_RAW_ADDRESSES, wallet_ids):
         download_wallet_addresses(wallet_ids, DIRECTORY_RAW_ADDRESSES)
 
+    os.makedirs(DIRECTORY_RAW_TRANSACTIONS, exist_ok=True)
     if not all_files_exist(DIRECTORY_RAW_TRANSACTIONS, wallet_ids):
         download_wallet_transactions(wallet_ids, DIRECTORY_RAW_TRANSACTIONS)
 
+    os.makedirs(DIRECTORY_PROCESSED_ADDR, exist_ok=True)
     existing_merged_addresses = (
         set(os.listdir(DIRECTORY_PROCESSED_ADDR))
         if os.path.exists(DIRECTORY_PROCESSED_ADDR)
         else set()
     )
+    os.makedirs(DIRECTORY_PROCESSED_TXS, exist_ok=True)
     existing_merged_transactions = (
         set(os.listdir(DIRECTORY_PROCESSED_TXS))
         if os.path.exists(DIRECTORY_PROCESSED_TXS)
@@ -151,10 +156,6 @@ if __name__ == "__main__":
 
     # CHUNKING DATA
 
-    # Minimum number of transactions to consider for chunking
-    # SatoshiDice.com-original 100000, BitZillions.com 15000
-    TRANSACTIONS_FOR_CHUNK_THRESHOLD = 100000
-
     intervals = [3, 6, 12, 24]  # months
 
     if os.path.exists(SERVICE_DIR):
@@ -192,9 +193,7 @@ if __name__ == "__main__":
     CHUNK_METRICS_DIRECTORY = f"{DIRECTORY_XLSX}/chunk_metrics"
 
     chunks = pd.read_excel(f"{DIRECTORY_XLSX}/3_months.xlsx")
-    chunks = chunks[
-        chunks["count"] > TRANSACTIONS_FOR_CHUNK_THRESHOLD
-    ]  # Filter chunks with enough transactions
+    chunks = chunks[chunks["count"] > TRANSACTIONS_FOR_CHUNK_THRESHOLD]
 
     for chunk in chunks["chunk"].tolist():
         print(f"Processing chunk: {chunk}")
@@ -231,7 +230,6 @@ if __name__ == "__main__":
     # ROLLING WINDOW ANALYSIS
 
     LOGS_DIR = f"{SERVICE_DIR}/logs"
-    MIN_TRANSACTIONS_TO_ANALYZE_WALLET = 1000
     WINDOW_SIZE = 10
     VAR_THRESHOLD = 10
 
