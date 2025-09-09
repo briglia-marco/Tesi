@@ -12,7 +12,9 @@ from tqdm import tqdm
 # _________________________________________________________________________________________________
 
 
-def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
+def save_transactions_chunk(
+    transactions: list, wallet_id: str, file_index: int, output_dir: str
+) -> None:
     """
     Save a chunk of transactions to a JSON file.
 
@@ -32,7 +34,9 @@ def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
 # _________________________________________________________________________________________________
 
 
-def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
+def fetch_wallet_transactions(
+    wallet_id: str, output_dir: str = "Data/raw/transactions"
+) -> list:
     """
     Fetches all transactions associated with a wallet ID from the WalletExplorer API.
 
@@ -118,7 +122,7 @@ def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
 # _________________________________________________________________________________________________
 
 
-def fetch_first_100_addresses(wallet_id, output_dir):
+def fetch_first_100_addresses(wallet_id: str, output_dir: str) -> dict | None:
     """
     Fetches the first 100 addresses of a given wallet ID and saves them to a JSON file.
 
@@ -157,7 +161,9 @@ def fetch_first_100_addresses(wallet_id, output_dir):
 # _________________________________________________________________________________________________
 
 
-def save_addresses_chunk(addresses, wallet_id, label, file_index, output_dir):
+def save_addresses_chunk(
+    addresses: list, wallet_id: str, label: str, file_index: int, output_dir: str
+) -> None:
     """
     Save a chunk of addresses to a JSON file.
 
@@ -184,7 +190,7 @@ def save_addresses_chunk(addresses, wallet_id, label, file_index, output_dir):
 # _________________________________________________________________________________________________
 
 
-def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
+def fetch_all_addresses(wallet_id: str, output_dir: str = "Data/raw/addresses") -> None:
     """
     Fetch all addresses associated with a given wallet ID from the WalletExplorer API.
 

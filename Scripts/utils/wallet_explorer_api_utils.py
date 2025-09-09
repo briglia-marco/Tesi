@@ -77,7 +77,7 @@ def download_first_100_addresses(directory_addresses: str) -> None:
 # _________________________________________________________________________________________________
 
 
-def get_transaction_count(wallet_id):
+def get_transaction_count(wallet_id: str) -> int:
     """
     Function to get the total number of transactions for a given wallet ID.
 
@@ -109,9 +109,9 @@ def get_transaction_count(wallet_id):
 
 
 def get_all_wallets_info(
-    directory="Data/processed/first_100_addresses",
-    output_file="Data/processed/info/wallets_info.json",
-):
+    directory: str = "Data/processed/first_100_addresses",
+    output_file: str = "Data/processed/info/wallets_info.json",
+) -> list:
     """
     Function to get wallet information for all wallets found in the directory.
 

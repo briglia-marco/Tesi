@@ -14,7 +14,7 @@ from Scripts.utils.data_chunking_utils import (
 )
 
 
-def process_chunks():
+def process_chunks() -> None:
     """
     Process and generate transaction chunks for analysis.
 

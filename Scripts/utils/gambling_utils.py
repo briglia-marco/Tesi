@@ -10,8 +10,12 @@ import pandas as pd
 import numpy as np
 from Scripts.utils.window_analysis_utils import load_wallet_bets
 
+# _________________________________________________________________________________________________
 
-def detect_martingale(df_txs_wallet, tol=0.05, min_prev_amount=0.00001):
+
+def detect_martingale(
+    df_txs_wallet: pd.DataFrame, tol: float = 0.05, min_prev_amount: float = 0.00001
+) -> dict:
     """
     Detect Martingale betting strategy patterns in the wallet transactions.
 
@@ -64,7 +68,7 @@ def detect_martingale(df_txs_wallet, tol=0.05, min_prev_amount=0.00001):
 # _________________________________________________________________________________________________
 
 
-def detect_dAlembert(df_txs_wallet, tol=0.01):
+def detect_dAlembert(df_txs_wallet: pd.DataFrame, tol: float = 0.01) -> dict:
     """
     Detect d'Alembert betting strategy patterns in the wallet transactions.
 
@@ -116,7 +120,7 @@ def detect_dAlembert(df_txs_wallet, tol=0.01):
 # _________________________________________________________________________________________________
 
 
-def detect_flat_betting(df_txs_wallet, tol=0.01):
+def detect_flat_betting(df_txs_wallet: pd.DataFrame, tol: float = 0.01) -> dict:
     """
     Detect flat betting pattern in wallet transactions.
     A flat bettor consistently bets the same amount.
@@ -165,7 +169,7 @@ def detect_flat_betting(df_txs_wallet, tol=0.01):
 # _________________________________________________________________________________________________
 
 
-def max_consecutive_true(mask):
+def max_consecutive_true(mask: np.ndarray) -> int:
     """
     Count the maximum number of consecutive True values in a boolean array.
 
@@ -187,7 +191,7 @@ def max_consecutive_true(mask):
 # _________________________________________________________________________________________________
 
 
-def load_selected_wallets(logs_dir, threshold):
+def load_selected_wallets(logs_dir: str, threshold: float) -> dict:
     """
     Load wallets from log files that meet a low variance threshold.
 
@@ -218,7 +222,7 @@ def load_selected_wallets(logs_dir, threshold):
 # _________________________________________________________________________________________________
 
 
-def analyze_wallet(wallet_id, data):
+def analyze_wallet(wallet_id: str, data: list[dict]) -> dict | None:
     """
     Analyze the betting patterns of a wallet using different strategies.
 
@@ -254,7 +258,9 @@ def analyze_wallet(wallet_id, data):
 # _________________________________________________________________________________________________
 
 
-def analyze_period(period, wallets, results_dir, dir_chunks):
+def analyze_period(
+    period: str, wallets: list[str], results_dir: str, dir_chunks: str
+) -> None:
     """
     Analyze the wallets of a given period and save the results as JSON files.
 

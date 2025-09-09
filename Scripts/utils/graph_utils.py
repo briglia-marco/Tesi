@@ -14,7 +14,9 @@ import networkx as nx
 # _________________________________________________________________________________________________
 
 
-def build_graphs_for_wallet(chunk_to_process, directory_chunks, service_node):
+def build_graphs_for_wallet(
+    chunk_to_process: str, directory_chunks: str, service_node: str
+) -> None:
     """Build graphs for a specific wallet based on the provided chunks.
 
     Args:
@@ -51,8 +53,11 @@ def build_graphs_for_wallet(chunk_to_process, directory_chunks, service_node):
 
 
 def build_wallet_graph_for_chunk(
-    base_directory, service_node, chunk_to_process, output_dir="Data/graphs"
-):
+    base_directory: str,
+    service_node: str,
+    chunk_to_process: str,
+    output_dir: str = "Data/graphs",
+) -> None:
     """
     Build a wallet graph for a specific chunk of transactions.
 
@@ -117,7 +122,9 @@ def build_wallet_graph_for_chunk(
 # _________________________________________________________________________________________________
 
 
-def export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process):
+def export_wallet_graph_for_neo4j(
+    G: nx.Graph, output_dir: str, chunk_to_process: str
+) -> None:
     """
     Export the graph to a format suitable for Neo4j.
 
@@ -158,8 +165,11 @@ def export_wallet_graph_for_neo4j(G, output_dir, chunk_to_process):
 
 
 def build_txs_graph_for_chunk(
-    base_directory, wallet_id, chunk_to_process, output_dir="Data/graphs"
-):
+    base_directory: str,
+    wallet_id: str,
+    chunk_to_process: str,
+    output_dir: str = "Data/graphs",
+) -> None:
     """
     Build a transaction graph for a specific chunk of transactions
     related to a given wallet ID.
@@ -250,7 +260,9 @@ def build_txs_graph_for_chunk(
 # _________________________________________________________________________________________________
 
 
-def export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process):
+def export_txs_graph_for_neo4j(
+    G: nx.Graph, output_dir: str, wallet_id: str, chunk_to_process: str
+) -> None:
     """
     Export the transaction graph to a format suitable for Neo4j.
 

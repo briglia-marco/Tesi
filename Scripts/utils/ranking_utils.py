@@ -13,8 +13,15 @@ import pandas as pd
 
 
 def process_wallet_dataframe(
-    wallets_info_path, directory_addresses, known_services, w1, w2, w3, w4, w5
-):
+    wallets_info_path: str,
+    directory_addresses: str,
+    known_services: list,
+    w1: float,
+    w2: float,
+    w3: float,
+    w4: float,
+    w5: float,
+) -> pd.DataFrame:
     """
     Build dataframe, normalize columns and calculate scores.
 
@@ -48,7 +55,11 @@ def process_wallet_dataframe(
 # _________________________________________________________________________________________________
 
 
-def build_wallets_dataframe(wallets_info_path, dir_addresses, known_services):
+def build_wallets_dataframe(
+    wallets_info_path: str,
+    dir_addresses: str,
+    known_services: list,
+) -> pd.DataFrame:
     """
     Build the initial dataframe with wallet statistics.
 
@@ -107,8 +118,10 @@ def build_wallets_dataframe(wallets_info_path, dir_addresses, known_services):
 
 
 def get_wallet_activity_stats(
-    wallet_id, directory_transactions, coverage_threshold=0.8
-):
+    wallet_id: str,
+    directory_transactions: str,
+    coverage_threshold: float = 0.8,
+) -> tuple:
     """
     Return first and last transaction date, peak year
     and activity concentration span for a wallet.
@@ -166,7 +179,10 @@ def get_wallet_activity_stats(
 # _________________________________________________________________________________________________
 
 
-def calculate_wallet_activity(df_wallets, directory_transactions):
+def calculate_wallet_activity(
+    df_wallets: pd.DataFrame,
+    directory_transactions: str,
+) -> pd.DataFrame:
     """
     Add activity stats columns (first/last tx date, peak year, year variance)
     to an existing wallets dataframe.
@@ -206,7 +222,10 @@ def calculate_wallet_activity(df_wallets, directory_transactions):
 # _________________________________________________________________________________________________
 
 
-def normalize_columns(df, columns):
+def normalize_columns(
+    df: pd.DataFrame,
+    columns: list,
+) -> pd.DataFrame:
     """
     Normalize the specified columns of a dataframe using min-max scaling.
 
@@ -227,7 +246,14 @@ def normalize_columns(df, columns):
 # _________________________________________________________________________________________________
 
 
-def calculate_scores(df, w1, w2, w3, w4, w5):
+def calculate_scores(
+    df: pd.DataFrame,
+    w1: float,
+    w2: float,
+    w3: float,
+    w4: float,
+    w5: float,
+) -> pd.DataFrame:
     """
     Calculate the weighted score for each wallet based on normalized columns.
 

@@ -12,7 +12,7 @@ from Scripts.download_pipeline import run_download_pipeline
 from Scripts.process_chunk import process_chunks
 
 
-def main():
+def main() -> None:
     """
     Entry point of the program.
 

@@ -10,7 +10,7 @@ import config
 from Scripts.utils.gambling_utils import load_selected_wallets, analyze_period
 
 
-def run_gambling_detection():
+def run_gambling_detection() -> None:
     """
     Execute the gambling detection workflow on selected wallets.
 

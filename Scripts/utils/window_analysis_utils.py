@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 # _________________________________________________________________________________________________
 
 
-def load_wallet_payouts(wallet_id, payouts_file):
+def load_wallet_payouts(wallet_id: str, payouts_file: list[dict]) -> list[dict]:
     """
     Load wallet payouts for a specific period.
 
@@ -39,7 +39,7 @@ def load_wallet_payouts(wallet_id, payouts_file):
 # _________________________________________________________________________________________________
 
 
-def load_wallet_bets(wallet_id, txs_file):
+def load_wallet_bets(wallet_id: str, txs_file: list[dict]) -> list[dict]:
     """
     Load wallet bets for a specific period.
 
@@ -63,7 +63,7 @@ def load_wallet_bets(wallet_id, txs_file):
 # _________________________________________________________________________________________________
 
 
-def compute_time_differences(txs_wallet):
+def compute_time_differences(txs_wallet: list[dict]) -> pd.Series:
     """
     Compute time differences between consecutive transactions.
 
@@ -78,7 +78,12 @@ def compute_time_differences(txs_wallet):
     return pd.Series(time_diffs)
 
 
-def compute_rolling_metrics(time_diffs_series, window_size=10):
+# _________________________________________________________________________________________________
+
+
+def compute_rolling_metrics(
+    time_diffs_series: pd.Series, window_size: int = 10
+) -> tuple[pd.Series, pd.Series]:
     """
     Compute rolling metrics for time differences.
 
@@ -99,8 +104,12 @@ def compute_rolling_metrics(time_diffs_series, window_size=10):
 
 
 def summarize_wallet_behavior(
-    wallet_id, txs_wallet, time_diffs_series, rolling_var, low_var_threshold
-):
+    wallet_id: str,
+    txs_wallet: list[dict],
+    time_diffs_series: pd.Series,
+    rolling_var: pd.Series,
+    low_var_threshold: float,
+) -> dict:
     """
     Summarize the behavior of a wallet based on its transaction history.
 
@@ -140,8 +149,12 @@ def summarize_wallet_behavior(
 
 
 def plot_rolling_metrics(
-    wallet_id, rolling_mean, rolling_var, low_var_threshold, service
-):
+    wallet_id: str,
+    rolling_mean: pd.Series,
+    rolling_var: pd.Series,
+    low_var_threshold: float,
+    service: str,
+) -> None:
     """
     Plot the rolling mean and variance of time differences for a wallet.
 
@@ -198,15 +211,15 @@ def plot_rolling_metrics(
 
 
 def analyze_wallet(
-    period_metrics_file,
-    metrics_dir,
-    json_dir,
-    service,
-    wallet_index=0,
-    wallet_id_override=None,
-    window_size=10,
-    var_threshold=10,
-):
+    period_metrics_file: str,
+    metrics_dir: str,
+    json_dir: str,
+    service: str,
+    wallet_index: int = 0,
+    wallet_id_override: str | None = None,
+    window_size: int = 10,
+    var_threshold: float = 10,
+) -> dict:
     """
     Analyze a wallet's betting behavior over a specified period.
 
@@ -255,7 +268,7 @@ def analyze_wallet(
 # _________________________________________________________________________________________________
 
 
-def get_wallets_meeting_criteria(metrics_path, min_tx=1000):
+def get_wallets_meeting_criteria(metrics_path: str, min_tx: int = 1000) -> list[str]:
     """
     Get a list of wallet IDs that meet the specified criteria.
 
@@ -275,7 +288,7 @@ def get_wallets_meeting_criteria(metrics_path, min_tx=1000):
 # _________________________________________________________________________________________________
 
 
-def list_metrics_files(metrics_dir):
+def list_metrics_files(metrics_dir: str) -> list[str]:
     """
     Returns a list of metric files in the specified directory.
 
@@ -295,7 +308,7 @@ def list_metrics_files(metrics_dir):
 # _________________________________________________________________________________________________
 
 
-def build_log_file_path(log_dir, metrics_file):
+def build_log_file_path(log_dir: str, metrics_file: str) -> str:
     """
     Builds the log file path based on the metrics file name.
 
@@ -314,7 +327,7 @@ def build_log_file_path(log_dir, metrics_file):
 # _________________________________________________________________________________________________
 
 
-def should_skip_analysis(log_file_path, min_tx):
+def should_skip_analysis(log_file_path: str, min_tx: int) -> bool:
     """
     Check if the analysis should be skipped based on existing log file.
 
@@ -341,14 +354,14 @@ def should_skip_analysis(log_file_path, min_tx):
 
 
 def analyze_wallets_for_file(
-    metrics_file,
-    metrics_dir,
-    json_dir,
-    service,
-    window_size,
-    var_threshold,
-    min_tx=1000,
-):
+    metrics_file: str,
+    metrics_dir: str,
+    json_dir: str,
+    service: str,
+    window_size: int,
+    var_threshold: float,
+    min_tx: int = 1000,
+) -> dict:
     """
     Analyze all wallets in a metrics file that meet the specified criteria.
 
@@ -389,7 +402,7 @@ def analyze_wallets_for_file(
 # _________________________________________________________________________________________________
 
 
-def save_log(log_file_path, log_report):
+def save_log(log_file_path: str, log_report: dict) -> None:
     """
     Save the log report to a JSON file.
 

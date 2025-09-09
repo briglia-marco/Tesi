@@ -12,7 +12,9 @@ import pandas as pd
 # _________________________________________________________________________________________________
 
 
-def analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir):
+def analyze_chunk_metrics(
+    chunk_to_process: str, directory_chunks: str, output_dir: str
+) -> None:
     """
     Analyze metrics for a specific chunk of transactions.
     This function processes a chunk file, builds a DataFrame with wallet
@@ -79,7 +81,9 @@ def analyze_chunk_metrics(chunk_to_process, directory_chunks, output_dir):
 # _________________________________________________________________________________________________
 
 
-def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
+def build_chunk_metrics_dataframe(
+    directory_input: str, chunk_to_process: str
+) -> pd.DataFrame:
     """
     Count wallet transactions in a specific time period.
 
@@ -136,7 +140,7 @@ def build_chunk_metrics_dataframe(directory_input, chunk_to_process):
 # _________________________________________________________________________________________________
 
 
-def parse_transaction(transaction):
+def parse_transaction(transaction: dict) -> tuple:
     """
     Parse a transaction to extract wallet ID, amount, and type.
 
@@ -164,7 +168,7 @@ def parse_transaction(transaction):
 # _________________________________________________________________________________________________
 
 
-def load_chunk_transactions(chunk_path):
+def load_chunk_transactions(chunk_path: str) -> list:
     """
     Load transactions from a JSON file.
 
@@ -184,7 +188,7 @@ def load_chunk_transactions(chunk_path):
 # _________________________________________________________________________________________________
 
 
-def get_wallet_transactions(wallet_id, transactions):
+def get_wallet_transactions(wallet_id: str, transactions: list) -> list:
     """
     Get transactions for a specific wallet from the list of transactions.
 
@@ -220,7 +224,7 @@ def get_wallet_transactions(wallet_id, transactions):
 # _________________________________________________________________________________________________
 
 
-def compute_time_differences(wallet_txs):
+def compute_time_differences(wallet_txs: list) -> list:
     """
     Compute time differences between transactions for a specific wallet.
 
@@ -250,7 +254,7 @@ def compute_time_differences(wallet_txs):
 # _________________________________________________________________________________________________
 
 
-def compute_time_statistics(time_diffs):
+def compute_time_statistics(time_diffs: list) -> dict | None:
     """
     Compute time variance statistics for a specific wallet in a given chunk.
 
@@ -278,7 +282,9 @@ def compute_time_statistics(time_diffs):
 # _________________________________________________________________________________________________
 
 
-def update_dataframe_with_stats(dataframe, wallet_id, stats):
+def update_dataframe_with_stats(
+    dataframe: pd.DataFrame, wallet_id: str, stats: dict
+) -> None:
     """
     Update the DataFrame with the calculated statistics.
 
@@ -296,7 +302,7 @@ def update_dataframe_with_stats(dataframe, wallet_id, stats):
 # _________________________________________________________________________________________________
 
 
-def calculate_time_variance(wallet_id, transactions):
+def calculate_time_variance(wallet_id: str, transactions: list) -> dict | None:
     """
     Calculate time variance statistics for a specific wallet in a given chunk.
 
@@ -326,7 +332,9 @@ def calculate_time_variance(wallet_id, transactions):
 # _________________________________________________________________________________________________
 
 
-def calculate_chunk_global_metrics(chunk_file_path, global_metrics_df, chunk_file_name):
+def calculate_chunk_global_metrics(
+    chunk_file_path: str, global_metrics_df: pd.DataFrame, chunk_file_name: str
+) -> pd.DataFrame:
     """
     Calculate global metrics for a chunk and update the global metrics
     DataFrame.

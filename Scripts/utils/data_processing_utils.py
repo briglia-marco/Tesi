@@ -11,7 +11,9 @@ from Scripts.utils.fetch_utils import fetch_all_addresses, fetch_wallet_transact
 # _________________________________________________________________________________________________
 
 
-def download_wallet_addresses(wallet_ids, directory_raw_addresses):
+def download_wallet_addresses(
+    wallet_ids: list[str], directory_raw_addresses: str
+) -> None:
     """
     Download all addresses associated with a list of wallet IDs by querying the
     WalletExplorer API. Downloads are skipped if the first address chunk already exists
@@ -32,7 +34,9 @@ def download_wallet_addresses(wallet_ids, directory_raw_addresses):
 # _________________________________________________________________________________________________
 
 
-def download_wallet_transactions(wallet_ids, directory_raw_transactions):
+def download_wallet_transactions(
+    wallet_ids: list[str], directory_raw_transactions: str
+) -> None:
     """
     Download all addresses associated with a list of wallet IDs by querying the
     WalletExplorer API. Downloads are skipped if the first address chunk already exists
@@ -54,13 +58,13 @@ def download_wallet_transactions(wallet_ids, directory_raw_transactions):
 
 
 def merge_wallet_json_files(
-    wallet_id,
-    directory_input,
-    directory_output,
-    output_suffix,
-    data_field,
-    count_field,
-):
+    wallet_id: str,
+    directory_input: str,
+    directory_output: str,
+    output_suffix: str,
+    data_field: str,
+    count_field: str,
+) -> None:
     """
     Merge all JSON files for a given wallet containing either addresses or transactions
     into a single JSON file. The data_field and count_field are customizable.
@@ -116,13 +120,13 @@ def merge_wallet_json_files(
 
 
 def split_json_file(
-    wallet_id,
-    directory_input,
-    directory_output,
-    data_field,
-    chunk_size=100000,
-    suffix="addresses",
-):
+    wallet_id: str,
+    directory_input: str,
+    directory_output: str,
+    data_field: str,
+    chunk_size: int = 100000,
+    suffix: str = "addresses",
+) -> None:
     """
     Split a merged JSON file containing either addresses or transactions
     into multiple JSON files each containing up to chunk_size objects.
@@ -163,12 +167,12 @@ def split_json_file(
 
 
 def split_all_wallet_files(
-    wallet_ids,
-    dir_processed_addresses,
-    dir_processed_transactions,
-    dir_raw_addresses,
-    dir_raw_transactions,
-):
+    wallet_ids: list[str],
+    dir_processed_addresses: str,
+    dir_processed_transactions: str,
+    dir_raw_addresses: str,
+    dir_raw_transactions: str,
+) -> None:
     """
     Split all merged JSON files for a list of wallet IDs into chunks of 100,000 objects,
     for both addresses and transactions.

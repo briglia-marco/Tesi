@@ -11,7 +11,7 @@ import config
 from Scripts.utils.metrics_utils import calculate_chunk_global_metrics
 
 
-def process_chunk_global_metrics():
+def process_chunk_global_metrics() -> None:
     """
     Compute and aggregate global metrics for all chunks.
 

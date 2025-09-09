@@ -25,7 +25,7 @@ from Scripts.utils.data_processing_utils import (
 )
 
 
-def run_download_pipeline(do_merge: bool = False):
+def run_download_pipeline(do_merge: bool = False) -> None:
     """
     Runs the pipeline for downloading, processing, and analyzing wallets.
 

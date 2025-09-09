@@ -13,7 +13,7 @@ import pandas as pd
 # _________________________________________________________________________________________________
 
 
-def find_global_start_time(files, input_dir):
+def find_global_start_time(files: list, input_dir: str) -> pd.Timestamp | None:
     """
     Find the global start time for a wallet's transactions based on the earliest
     timestamp across all files.
@@ -43,7 +43,9 @@ def find_global_start_time(files, input_dir):
 # _________________________________________________________________________________________________
 
 
-def create_output_dirs(wallet_id, output_base_dir, intervals_months):
+def create_output_dirs(
+    wallet_id: str, output_base_dir: str, intervals_months: list
+) -> None:
     """
     Create output directories for chunked transactions based on specified intervals.
 
@@ -63,14 +65,14 @@ def create_output_dirs(wallet_id, output_base_dir, intervals_months):
 
 
 def process_transaction_file(
-    file_name,
-    input_dir,
-    start_time,
-    intervals_months,
-    chunk_data,
-    wallet_id,
-    output_base_dir,
-):
+    file_name: str,
+    input_dir: str,
+    start_time: pd.Timestamp,
+    intervals_months: list,
+    chunk_data: dict,
+    wallet_id: str,
+    output_base_dir: str,
+) -> None:
     """Process a transaction file and chunk its data into specified intervals.
 
     Args:
@@ -117,7 +119,7 @@ def process_transaction_file(
 # _________________________________________________________________________________________________
 
 
-def save_chunks_to_disk(chunk_data):
+def save_chunks_to_disk(chunk_data: dict) -> None:
     """
     Save the chunked transactions to disk.
 
@@ -136,8 +138,8 @@ def save_chunks_to_disk(chunk_data):
 
 
 def split_transactions_into_chunks(
-    wallet_id, input_dir, output_base_dir, intervals_months
-):
+    wallet_id: str, input_dir: str, output_base_dir: str, intervals_months: list
+) -> None:
     """
     Split transactions of a wallet into chunks based on specified intervals.
 
@@ -187,7 +189,7 @@ def split_transactions_into_chunks(
 # _________________________________________________________________________________________________
 
 
-def count_transactions_in_chunks(directory_input):
+def count_transactions_in_chunks(directory_input: str) -> pd.DataFrame:
     """
     Count the number of transactions in each chunk for a given wallet ID.
 
@@ -216,7 +218,9 @@ def count_transactions_in_chunks(directory_input):
 # _________________________________________________________________________________________________
 
 
-def generate_chunk_transaction_reports(base_chunk_dir, intervals, output_dir):
+def generate_chunk_transaction_reports(
+    base_chunk_dir: str, intervals: list, output_dir: str
+) -> None:
     """
     Conta il numero di transazioni in ogni file di ogni periodo (chunk)
     e salva i risultati in file Excel per ciascun intervallo di mesi.

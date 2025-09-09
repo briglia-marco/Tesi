@@ -12,7 +12,7 @@ from Scripts.utils.metrics_utils import analyze_chunk_metrics
 from Scripts.utils.graph_utils import build_graphs_for_wallet
 
 
-def process_selected_chunks(selected_chunk):
+def process_selected_chunks(selected_chunk: int) -> None:
     """
     Process transaction chunks for a given interval.
 

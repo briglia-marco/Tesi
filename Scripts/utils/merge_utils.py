@@ -5,8 +5,12 @@ This module is responsable of merging raw transaction/address files
 import os
 from Scripts.utils.data_processing_utils import merge_wallet_json_files
 
+# _________________________________________________________________________________________________
 
-def merge_addresses(wallet_ids, directory_raw, directory_processed):
+
+def merge_addresses(
+    wallet_ids: list, directory_raw: str, directory_processed: str
+) -> None:
     """
     Merge raw address JSON files for each wallet into a single consolidated file.
 
@@ -36,7 +40,12 @@ def merge_addresses(wallet_ids, directory_raw, directory_processed):
             )
 
 
-def merge_transactions(wallet_ids, directory_raw, directory_processed):
+# _________________________________________________________________________________________________
+
+
+def merge_transactions(
+    wallet_ids: list, directory_raw: str, directory_processed: str
+) -> None:
     """
     Merge raw transaction JSON files for each wallet into a single consolidated file.
 
@@ -65,13 +74,16 @@ def merge_transactions(wallet_ids, directory_raw, directory_processed):
             )
 
 
+# _________________________________________________________________________________________________
+
+
 def merge_files(
-    wallet_ids,
-    DIRECTORY_RAW_ADDRESSES,
-    DIRECTORY_PROCESSED_ADDR,
-    DIRECTORY_RAW_TRANSACTIONS,
-    DIRECTORY_PROCESSED_TXS,
-):
+    wallet_ids: list,
+    DIRECTORY_RAW_ADDRESSES: str,
+    DIRECTORY_PROCESSED_ADDR: str,
+    DIRECTORY_RAW_TRANSACTIONS: str,
+    DIRECTORY_PROCESSED_TXS: str,
+) -> None:
     """
     Run both address and transaction merging for the given wallet IDs.
 

@@ -17,7 +17,7 @@ from Scripts.utils.window_analysis_utils import (
 )
 
 
-def run_rolling_window_analysis():
+def run_rolling_window_analysis() -> None:
     """
     Execute rolling window analysis on all metrics files in the service directory.
 

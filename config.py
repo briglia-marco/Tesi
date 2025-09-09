@@ -14,21 +14,6 @@ WINDOW_SIZE = 10
 VAR_THRESHOLD = 10
 PERCENT_LOW_VAR_THRESHOLD = 0.50
 
-
-DIRECTORY_RAW_ADDRESSES = "Data/raw/addresses"
-DIRECTORY_RAW_TRANSACTIONS = "Data/raw/transactions"
-DIRECTORY_PROCESSED_100_ADDRESSES = "Data/processed/first_100_addresses"
-DIRECTORY_PROCESSED_ADDR = "Data/processed/addresses"
-DIRECTORY_PROCESSED_TXS = "Data/processed/transactions"
-DIRECTORY_PRO_INFO = "Data/processed/info"
-DIRECTORY_SERVICE = f"Data/chunks/{SERVICE}"
-DIRECTORY_CHUNKS = f"{DIRECTORY_SERVICE}/3_months"
-DIRECTORY_XLSX = f"{DIRECTORY_SERVICE}/xlsx"
-DIRECTORY_CHUNK_METRICS = f"{DIRECTORY_XLSX}/chunk_metrics"
-DIRECTORY_LOGS = f"{DIRECTORY_SERVICE}/logs"
-DIRECTORY_RESULTS = f"Data/Results/{SERVICE}"
-
-
 DO_MERGE = False
 
 INTERVALS = [3, 6, 12, 24]  # months
@@ -49,3 +34,16 @@ KNOWN_SERVICES = [
     "Betcoin.ag",
     "CloudBet.com",
 ]
+
+DIRECTORY_RAW_ADDRESSES = "Data/raw/addresses"
+DIRECTORY_RAW_TRANSACTIONS = "Data/raw/transactions"
+DIRECTORY_PROCESSED_100_ADDRESSES = "Data/processed/first_100_addresses"
+DIRECTORY_PROCESSED_ADDR = "Data/processed/addresses"
+DIRECTORY_PROCESSED_TXS = "Data/processed/transactions"
+DIRECTORY_PRO_INFO = "Data/processed/info"
+DIRECTORY_SERVICE = f"Data/chunks/{SERVICE}"
+DIRECTORY_CHUNKS = f"{DIRECTORY_SERVICE}/3_months"
+DIRECTORY_XLSX = f"{DIRECTORY_SERVICE}/xlsx"
+DIRECTORY_CHUNK_METRICS = f"{DIRECTORY_XLSX}/chunk_metrics"
+DIRECTORY_LOGS = f"{DIRECTORY_SERVICE}/logs"
+DIRECTORY_RESULTS = f"Data/Results/{SERVICE}"

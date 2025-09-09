@@ -5,11 +5,12 @@ wallet transactions and global dataset statistics.
 
 import matplotlib.pyplot as plt
 import seaborn as sns
+import pandas as pd
 
 # _________________________________________________________________________________________________
 
 
-def plot_wallet_metrics(dataframe):
+def plot_wallet_metrics(dataframe: pd.DataFrame) -> None:
     """
     Plot various metrics for wallet transactions.
 
@@ -24,7 +25,7 @@ def plot_wallet_metrics(dataframe):
 # _________________________________________________________________________________________________
 
 
-def plot_chunk_global_metrics(dataframe):
+def plot_chunk_global_metrics(dataframe: pd.DataFrame) -> None:
     """
     Plot global metrics for the dataset.
 
@@ -42,7 +43,7 @@ def plot_chunk_global_metrics(dataframe):
 # _________________________________________________________________________________________________
 
 
-def plot_total_transactions(df):
+def plot_total_transactions(df: pd.DataFrame) -> None:
     """
     Plot the total number of transactions over different periods.
 
@@ -69,7 +70,7 @@ def plot_total_transactions(df):
 # _________________________________________________________________________________________________
 
 
-def plot_unique_wallets(df):
+def plot_unique_wallets(df: pd.DataFrame) -> None:
     """
     Plot the number of unique wallets over different periods.
 
@@ -96,7 +97,7 @@ def plot_unique_wallets(df):
 # _________________________________________________________________________________________________
 
 
-def plot_total_btc_received(df):
+def plot_total_btc_received(df: pd.DataFrame) -> None:
     """
     Plot the total BTC received over different periods.
 
@@ -123,7 +124,7 @@ def plot_total_btc_received(df):
 # _________________________________________________________________________________________________
 
 
-def plot_net_balance_stats(df):
+def plot_net_balance_stats(df: pd.DataFrame) -> None:
     """
     Plot the mean and variance of net balance over time.
 
@@ -157,7 +158,7 @@ def plot_net_balance_stats(df):
 # _________________________________________________________________________________________________
 
 
-def plot_time_variance_stats(df):
+def plot_time_variance_stats(df: pd.DataFrame) -> None:
     """
     Plot the time variance statistics over time.
 
@@ -191,7 +192,7 @@ def plot_time_variance_stats(df):
 # _________________________________________________________________________________________________
 
 
-def plot_time_variance_distribution(df):
+def plot_time_variance_distribution(df: pd.DataFrame) -> None:
     """
     Plot the distribution of time variance.
 
@@ -210,7 +211,7 @@ def plot_time_variance_distribution(df):
 # _________________________________________________________________________________________________
 
 
-def plot_top_active_wallets(df, top_n=20):
+def plot_top_active_wallets(df: pd.DataFrame, top_n: int = 20) -> None:
     """
     Plot the top N active wallets based on transaction counts.
 
@@ -239,7 +240,7 @@ def plot_top_active_wallets(df, top_n=20):
 # _________________________________________________________________________________________________
 
 
-def plot_mean_time_diff_distribution(df):
+def plot_mean_time_diff_distribution(df: pd.DataFrame) -> None:
     """
     Plot the distribution of mean time differences between transactions.
 
