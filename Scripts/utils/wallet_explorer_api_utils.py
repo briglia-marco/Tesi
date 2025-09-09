@@ -6,7 +6,7 @@ import json
 import os
 import requests
 from bs4 import BeautifulSoup
-from Scripts.fetch import fetch_first_100_addresses
+from Scripts.utils.fetch_utils import fetch_first_100_addresses
 
 # _________________________________________________________________________________________________
 
@@ -155,6 +155,3 @@ def get_all_wallets_info(
     print(f"Saved wallet info to {output_file}")
 
     return data
-
-
-# _________________________________________________________________________________________________

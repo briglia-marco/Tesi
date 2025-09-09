@@ -253,6 +253,3 @@ def plot_mean_time_diff_distribution(df):
     plt.ylabel("Frequency")
     plt.grid(True)
     plt.show()
-
-
-# _________________________________________________________________________________________________

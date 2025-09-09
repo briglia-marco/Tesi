@@ -247,6 +247,3 @@ def calculate_scores(df, w1, w2, w3, w4, w5):
     )
     df = df.sort_values(by="score", ascending=False).reset_index(drop=True)
     return df
-
-
-# _________________________________________________________________________________________________

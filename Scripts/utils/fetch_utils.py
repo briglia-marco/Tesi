@@ -23,9 +23,7 @@ def save_transactions_chunk(transactions, wallet_id, file_index, output_dir):
         output_dir (str): The directory where the JSON file will be saved.
     """
     os.makedirs(output_dir, exist_ok=True)
-    file_path = os.path.join(
-        output_dir, f"{wallet_id}_transactions_{file_index}.json"
-    )
+    file_path = os.path.join(output_dir, f"{wallet_id}_transactions_{file_index}.json")
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(transactions, f, indent=4)
     print(f"Saved chunk {file_index} with {len(transactions)} transactions.")
@@ -60,9 +58,7 @@ def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
 
     print(f"Starting download for wallet: {wallet_id}")
 
-    pbar = tqdm(
-        desc=f"📦 {wallet_id} transactions", unit="tx", dynamic_ncols=True
-    )
+    pbar = tqdm(desc=f"📦 {wallet_id} transactions", unit="tx", dynamic_ncols=True)
 
     while True:
         url = f"{base_url}?wallet={wallet_id}&from={from_index}&count={count}"
@@ -112,9 +108,7 @@ def fetch_wallet_transactions(wallet_id, output_dir="Data/raw/transactions"):
         time.sleep(0.6)
 
     if all_transactions:
-        save_transactions_chunk(
-            all_transactions, wallet_id, file_index, output_dir
-        )
+        save_transactions_chunk(all_transactions, wallet_id, file_index, output_dir)
 
     pbar.close()
     print(f"Completed download for {wallet_id}")
@@ -154,9 +148,7 @@ def fetch_first_100_addresses(wallet_id, output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
     # Save the JSON response to a file
-    with open(
-        f"{output_dir}/{wallet_id}_addresses.json", "w", encoding="utf-8"
-    ) as f:
+    with open(f"{output_dir}/{wallet_id}_addresses.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
     return data
@@ -183,9 +175,7 @@ def save_addresses_chunk(addresses, wallet_id, label, file_index, output_dir):
         "addresses_count": len(addresses),
         "addresses": addresses,
     }
-    file_path = os.path.join(
-        output_dir, f"{wallet_id}_addresses_{file_index}.json"
-    )
+    file_path = os.path.join(output_dir, f"{wallet_id}_addresses_{file_index}.json")
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(chunk_data, f, indent=4)
     print(f"Saved chunk {file_index} with {len(addresses)} addresses.")
@@ -214,9 +204,7 @@ def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
 
     print(f"Starting address download for wallet: {wallet_id}")
 
-    pbar = tqdm(
-        desc=f"📦 {wallet_id} addresses", unit="addr", dynamic_ncols=True
-    )
+    pbar = tqdm(desc=f"📦 {wallet_id} addresses", unit="addr", dynamic_ncols=True)
 
     while True:
         url = f"{base_url}?wallet={wallet_id}&from={from_index}&count={count}"
@@ -259,18 +247,14 @@ def fetch_all_addresses(wallet_id, output_dir="Data/raw/addresses"):
 
         while len(all_addresses) >= chunk_size:
             chunk = all_addresses[:chunk_size]
-            save_addresses_chunk(
-                chunk, wallet_id, label, file_index, output_dir
-            )
+            save_addresses_chunk(chunk, wallet_id, label, file_index, output_dir)
             file_index += 1
             all_addresses = all_addresses[chunk_size:]
 
         time.sleep(0.6)
 
     if all_addresses:
-        save_addresses_chunk(
-            all_addresses, wallet_id, label, file_index, output_dir
-        )
+        save_addresses_chunk(all_addresses, wallet_id, label, file_index, output_dir)
 
     pbar.close()
     print(f"Completed address download for {wallet_id}\n")

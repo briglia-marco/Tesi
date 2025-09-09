@@ -3,7 +3,7 @@ This module is responsable of merging raw transaction/address files
 """
 
 import os
-from Scripts.data_processing import merge_wallet_json_files
+from Scripts.utils.data_processing_utils import merge_wallet_json_files
 
 
 def merge_addresses(wallet_ids, directory_raw, directory_processed):

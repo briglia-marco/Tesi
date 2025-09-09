@@ -8,7 +8,7 @@ import os
 import json
 import pandas as pd
 import numpy as np
-from Scripts.rolling_analisys import load_wallet_bets
+from Scripts.utils.window_analysis_utils import load_wallet_bets
 
 
 def detect_martingale(df_txs_wallet, tol=0.05, min_prev_amount=0.00001):
@@ -25,9 +25,7 @@ def detect_martingale(df_txs_wallet, tol=0.05, min_prev_amount=0.00001):
     """
     df_txs_wallet = df_txs_wallet.sort_values("time").reset_index(drop=True)
 
-    amounts = pd.to_numeric(
-        df_txs_wallet["amount"], errors="coerce"
-    ).to_numpy()
+    amounts = pd.to_numeric(df_txs_wallet["amount"], errors="coerce").to_numpy()
     n = len(amounts)
 
     if n < 2:
@@ -80,9 +78,7 @@ def detect_dAlembert(df_txs_wallet, tol=0.01):
     """
     df_txs_wallet = df_txs_wallet.sort_values("time").reset_index(drop=True)
 
-    amounts = pd.to_numeric(
-        df_txs_wallet["amount"], errors="coerce"
-    ).to_numpy()
+    amounts = pd.to_numeric(df_txs_wallet["amount"], errors="coerce").to_numpy()
     n = len(amounts)
 
     if n < 2:
@@ -134,9 +130,7 @@ def detect_flat_betting(df_txs_wallet, tol=0.01):
     """
     df_txs_wallet = df_txs_wallet.sort_values("time").reset_index(drop=True)
 
-    amounts = pd.to_numeric(
-        df_txs_wallet["amount"], errors="coerce"
-    ).to_numpy()
+    amounts = pd.to_numeric(df_txs_wallet["amount"], errors="coerce").to_numpy()
     n = len(amounts)
 
     if n == 0:
@@ -154,9 +148,7 @@ def detect_flat_betting(df_txs_wallet, tol=0.01):
 
     # Metrics
     flat_ratio = (
-        float(np.sum(flat_mask) / flat_mask.size)
-        if flat_mask.size > 0
-        else 1.0
+        float(np.sum(flat_mask) / flat_mask.size) if flat_mask.size > 0 else 1.0
     )
     flat_max_streak = max_consecutive_true(flat_mask)
 
@@ -282,29 +274,7 @@ def analyze_period(period, wallets, results_dir, dir_chunks):
         if result:
             period_results.append(result)
 
-    results_file_path = os.path.join(
-        results_dir, f"{period}_bet_analysis.json"
-    )
+    results_file_path = os.path.join(results_dir, f"{period}_bet_analysis.json")
     os.makedirs(results_dir, exist_ok=True)
     with open(results_file_path, "w", encoding="utf-8") as f:
         json.dump(period_results, f, indent=4)
-
-
-# _________________________________________________________________________________________________
-
-
-def run_gambling_detection(logs_dir, results_dir, dir_chunks, threshold=0.50):
-    """
-    Run gambling detection analysis on selected wallets.
-
-    Args:
-        logs_dir (str): Directory containing log files with selected wallets.
-        results_dir (str): Directory to save the analysis results.
-        dir_chunks (str): Directory containing chunk JSON files.
-        threshold (float): Threshold for selecting wallets based
-        on low variance windows.
-    """
-    selected_wallets = load_selected_wallets(logs_dir, threshold)
-    for period, wallets in selected_wallets.items():
-        analyze_period(period, wallets, results_dir, dir_chunks)
-    print(f"Gambling analysis completed. Results saved in {results_dir}.")
