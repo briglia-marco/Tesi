@@ -1,23 +1,16 @@
-# Tesi
+## Requirements
 
-# 📦 Virtual Environment Setup
+- Python **3.12** (recommended, project may not work with older or newer versions)
+- pip ≥ 25.0
+- virtualenv (optional but recommended)
 
-To keep dependencies isolated, it’s recommended to use a virtual environment.
-Create and activate the environment:
+## Installation
 
-macOS / Linux:
-```
-python3 -m venv venv
-source venv/bin/activate
-```
-Windows:
-```
-python -m venv venv
-venv\Scripts\activate
-```
-Install dependencies:
-```
+Clone the repository and create a virtual environment using Python 3.12:
+
+# create a virtual environment with Python 3.12
+python3.12 -m venv venv
+source venv/bin/activate   # On Windows use: venv\Scripts\activate
+
+# install dependencies
 pip install -r requirements.txt
-```
-Done ✅
-

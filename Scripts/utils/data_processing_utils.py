@@ -16,19 +16,25 @@ def download_wallet_addresses(
 ) -> None:
     """
     Download all addresses associated with a list of wallet IDs by querying the
-    WalletExplorer API. Downloads are skipped if the first address chunk already exists
-    in the target directory.
+    WalletExplorer API (or another service). Downloads are skipped only if the
+    first address chunk already exists.
 
     Args:
-        wallet_ids (list): List of wallet IDs to fetch addresses for.
-        directory_raw_addresses (str): Dir where the address JSON files will be saved.
+        wallet_ids (list[str]): List of wallet IDs to fetch addresses for.
+        directory_raw_addresses (str): Directory where address JSON files will be saved.
     """
+    os.makedirs(directory_raw_addresses, exist_ok=True)
+
     for wallet_id in wallet_ids:
-        if wallet_id in ("SatoshiDice.com-original", "BitZillions.com"):
-            address_file = f"{directory_raw_addresses}/{wallet_id}_addresses_1.json"
-            if not os.path.exists(address_file):
-                print(f"Downloading all addresses for {wallet_id}...")
+        address_file = f"{directory_raw_addresses}/{wallet_id}_addresses_1.json"
+        if not os.path.exists(address_file):
+            print(f"Downloading all addresses for {wallet_id}...")
+            try:
                 fetch_all_addresses(wallet_id, directory_raw_addresses)
+            except OSError as e:
+                print(f"Failed to download addresses for {wallet_id}: {e}")
+        else:
+            print(f"Addresses for {wallet_id} already exist, skipping download.")
 
 
 # _________________________________________________________________________________________________
@@ -38,20 +44,26 @@ def download_wallet_transactions(
     wallet_ids: list[str], directory_raw_transactions: str
 ) -> None:
     """
-    Download all addresses associated with a list of wallet IDs by querying the
-    WalletExplorer API. Downloads are skipped if the first address chunk already exists
-    in the target directory.
+    Download all transactions associated with a list of wallet IDs by querying the
+    WalletExplorer API (or another service). Downloads are skipped if the first
+    transaction chunk already exists in the target directory.
 
     Args:
-        wallet_ids (list): List of wallet IDs to fetch transactions for.
-        directory_raw_transactions (str): Dir where the transaction files will be saved.
+        wallet_ids (list[str]): List of wallet IDs to fetch transactions for.
+        directory_raw_transactions (str): Dir where transaction JSON files will be saved
     """
+    os.makedirs(directory_raw_transactions, exist_ok=True)
+
     for wallet_id in wallet_ids:
-        if wallet_id in ("SatoshiDice.com-original", "BitZillions.com"):
-            tx_file = f"{directory_raw_transactions}/{wallet_id}_transactions_1.json"
-            if not os.path.exists(tx_file):
-                print(f"Downloading all transactions for {wallet_id}...")
+        tx_file = f"{directory_raw_transactions}/{wallet_id}_transactions_1.json"
+        if not os.path.exists(tx_file):
+            print(f"Downloading all transactions for {wallet_id}...")
+            try:
                 fetch_wallet_transactions(wallet_id, directory_raw_transactions)
+            except OSError as e:
+                print(f"Failed to download transactions for {wallet_id}: {e}")
+        else:
+            print(f"Transactions for {wallet_id} already exist, skipping download.")
 
 
 # _________________________________________________________________________________________________

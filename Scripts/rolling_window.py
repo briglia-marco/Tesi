@@ -7,6 +7,9 @@ and logs the results for later review. It also skips files that have
 already been analyzed to avoid redundant computation.
 """
 
+import sys
+import os
+import pandas as pd
 import config
 from Scripts.utils.window_analysis_utils import (
     list_metrics_files,
@@ -29,6 +32,9 @@ def run_rolling_window_analysis() -> None:
     4. Analyze wallets using rolling window metrics and generate a report.
     5. Save the analysis log to the configured logs directory.
     """
+    empty_files = []
+    max_wallets_per_file = {}
+
     for metrics_file in list_metrics_files(config.DIRECTORY_CHUNK_METRICS):
         print(f"\nAnalisi periodo: {metrics_file}")
 
@@ -51,4 +57,30 @@ def run_rolling_window_analysis() -> None:
         )
         save_log(log_file_path, log_report)
 
-    print(f"\nAnalisys complete. Log saved in {config.DIRECTORY_LOGS}.")
+        if log_report.get("wallets"):
+            max_tx = max([w.get("n_tx", 0) for w in log_report["wallets"]], default=0)
+            max_wallets_per_file[metrics_file] = max_tx
+        else:
+            empty_files.append(metrics_file)
+            df = pd.read_excel(
+                os.path.join(config.DIRECTORY_CHUNK_METRICS, metrics_file)
+            )
+            if "in_degree" in df.columns:
+                max_wallets_per_file[metrics_file] = df["in_degree"].max()
+            else:
+                max_wallets_per_file[metrics_file] = 0
+
+    if empty_files:
+        print(
+            f"\nWarning: The following metrics files did not have any wallets meeting "
+            f"the minimum transaction threshold"
+            f"({config.MIN_TRANSACTIONS_TO_ANALYZE_WALLET}):"
+        )
+        for f in empty_files:
+            print(f"  - {f} (max wallet transactions: {max_wallets_per_file[f]})\n")
+        print(
+            f"Consider adjusting 'MIN_TRANSACTIONS_TO_ANALYZE_WALLET' in the config.\n"
+            f"You can check all chunk counts in '{config.DIRECTORY_CHUNK_METRICS}'"
+            f"to choose a suitable threshold."
+        )
+        sys.exit()

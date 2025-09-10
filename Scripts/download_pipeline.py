@@ -69,8 +69,10 @@ def run_download_pipeline(do_merge: bool = False) -> None:
         w4=config.W4,
         w5=config.W5,
     )
-    wallet_ids = df_wallets["wallet_id"].iloc[:5].tolist()
-    wallet_ids = ["DiceNow.com"]
+
+    wallet_ids = df_wallets["wallet_id"].iloc[:5].tolist()  # you need to remove this
+    # wallet_ids = ["DiceNow.com", ...] # if you want to analyze specified service(s)
+
     # Step 4: Download addresses & transactions
     os.makedirs(config.DIRECTORY_RAW_ADDRESSES, exist_ok=True)
     if not all_files_exist(config.DIRECTORY_RAW_ADDRESSES, wallet_ids):

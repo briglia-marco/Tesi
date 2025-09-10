@@ -237,7 +237,7 @@ def analyze_wallet(
         dict: A summary of the wallet's behavior.
     """
     df = pd.read_excel(f"{metrics_dir}/{period_metrics_file}")
-    df_sorted = df.sort_values(by="out_degree", ascending=False)
+    df_sorted = df.sort_values(by="in_degree", ascending=False)
 
     if wallet_id_override is not None:
         wallet_id = wallet_id_override
@@ -268,7 +268,7 @@ def analyze_wallet(
 # _________________________________________________________________________________________________
 
 
-def get_wallets_meeting_criteria(metrics_path: str, min_tx: int = 1000) -> list[str]:
+def get_wallets_meeting_criteria(metrics_path: str, min_tx: int) -> list[str]:
     """
     Get a list of wallet IDs that meet the specified criteria.
 
@@ -281,7 +281,8 @@ def get_wallets_meeting_criteria(metrics_path: str, min_tx: int = 1000) -> list[
     """
     print(f"Loading metrics from: {metrics_path}")
     df = pd.read_excel(metrics_path)
-    filtered = df[df["out_degree"] >= min_tx]
+    filtered = df[df["in_degree"] >= min_tx]
+
     return filtered["wallet_id"].tolist()
 
 
@@ -329,7 +330,7 @@ def build_log_file_path(log_dir: str, metrics_file: str) -> str:
 
 def should_skip_analysis(log_file_path: str, min_tx: int) -> bool:
     """
-    Check if the analysis should be skipped based on existing log file.
+    Check if the analysis should be skipped based on an existing log file.
 
     Args:
         log_file_path (str): The path to the log file.
@@ -344,9 +345,19 @@ def should_skip_analysis(log_file_path: str, min_tx: int) -> bool:
     try:
         with open(log_file_path, "r", encoding="utf-8") as log_file:
             existing = json.load(log_file)
-            return existing.get("min_transactions") == min_tx
+            existing_min_tx = existing.get("min_transactions")
+
+            if existing_min_tx == min_tx:
+                return True
+            else:
+                print(
+                    f"-> Existing log '{log_file_path}' "
+                    f"has min_transactions={existing_min_tx}, "
+                    f"but current threshold is {min_tx}. Rerunning analysis."
+                )
+                return False
     except json.JSONDecodeError:
-        print(f" -> File {log_file_path} not valid, repeat analysis")
+        print(f" -> File {log_file_path} not valid JSON, rerunning analysis.")
         return False
 
 
@@ -360,7 +371,7 @@ def analyze_wallets_for_file(
     service: str,
     window_size: int,
     var_threshold: float,
-    min_tx: int = 1000,
+    min_tx: int,
 ) -> dict:
     """
     Analyze all wallets in a metrics file that meet the specified criteria.
@@ -382,6 +393,9 @@ def analyze_wallets_for_file(
     )
 
     log_report = {"min_transactions": min_tx, "wallets": []}
+
+    if not wallet_ids:
+        return log_report
 
     for wallet_id in wallet_ids:
         summary = analyze_wallet(
