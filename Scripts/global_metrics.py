@@ -21,6 +21,7 @@ def process_chunk_global_metrics() -> None:
         3. Aggregates all chunk metrics into a single DataFrame.
         4. Saves the aggregated metrics to an Excel file in the configured directory.
     """
+    os.makedirs(config.DIRECTORY_CHUNK_METRICS, exist_ok=True)
     chunk_metrics_files = os.listdir(config.DIRECTORY_CHUNK_METRICS)
     df_chunk_global_metrics = pd.DataFrame()
 

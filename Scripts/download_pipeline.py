@@ -70,7 +70,7 @@ def run_download_pipeline(do_merge: bool = False) -> None:
         w5=config.W5,
     )
     wallet_ids = df_wallets["wallet_id"].iloc[:5].tolist()
-
+    wallet_ids = ["DiceNow.com"]
     # Step 4: Download addresses & transactions
     os.makedirs(config.DIRECTORY_RAW_ADDRESSES, exist_ok=True)
     if not all_files_exist(config.DIRECTORY_RAW_ADDRESSES, wallet_ids):
