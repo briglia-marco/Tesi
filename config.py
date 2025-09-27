@@ -6,9 +6,15 @@ Config file to setup directories, service and thresholds
 
 # SatoshiDice.com-original, (100000, 1000)
 # BitZillions.com, (10000, 200)
+
+# SERVICE = "BitZillions.com"
+# TRANSACTIONS_FOR_CHUNK_THRESHOLD = 10000
+# MIN_TRANSACTIONS_TO_ANALYZE_WALLET = 200
+
 SERVICE = "SatoshiDice.com-original"
 TRANSACTIONS_FOR_CHUNK_THRESHOLD = 100000
 MIN_TRANSACTIONS_TO_ANALYZE_WALLET = 1000
+
 WINDOW_SIZE = 10
 
 VAR_THRESHOLD = 10

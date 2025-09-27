@@ -5,7 +5,6 @@ analyzing, and detecting gambling patterns in cryptocurrency wallet data.
 
 import config
 from Scripts.build_graph import process_selected_chunks
-from Scripts.global_metrics import process_chunk_global_metrics
 from Scripts.rolling_window import run_rolling_window_analysis
 from Scripts.gambling_detection import run_gambling_detection
 from Scripts.download_pipeline import run_download_pipeline
@@ -27,14 +26,9 @@ def main() -> None:
     # CHUNKING DATA
     process_chunks()
 
-    # CALCULATE METRICS
+    # CHUNK METRICS AND GRAPH BUILDING
     interval = config.INTERVALS[0]  # 3 months
-
-    # MODIFICARE ATTRIBUTI NEO4J
     process_selected_chunks(interval)
-
-    # CHUNK GLOBAL METRICS
-    process_chunk_global_metrics()
 
     # ROLLING WINDOW ANALYSIS
     run_rolling_window_analysis()

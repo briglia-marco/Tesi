@@ -9,7 +9,10 @@ a specified transaction count threshold.
 import sys
 import pandas as pd
 import config
-from Scripts.utils.metrics_utils import analyze_chunk_metrics
+from Scripts.utils.metrics_utils import (
+    analyze_chunk_metrics,
+    process_chunk_global_metrics,
+)
 from Scripts.utils.graph_utils import build_graphs_for_wallet
 
 
@@ -56,3 +59,5 @@ def process_selected_chunks(selected_chunk: str) -> None:
             config.DIRECTORY_CHUNKS,
             output_dir=config.DIRECTORY_CHUNK_METRICS,
         )
+
+    process_chunk_global_metrics()
