@@ -10,7 +10,6 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from Scripts.utils.window_analysis_utils import load_wallet_bets
 
 # _________________________________________________________________________________________________
 
@@ -172,7 +171,7 @@ def load_selected_wallets(logs_dir: str) -> dict:
         dict: A dictionary where keys are log file names (without extension) and
         values are lists of wallet IDs that meet the threshold.
     """
-    selected_wallets = {}
+    selected_wallets = set()
     for log_file in os.listdir(logs_dir):
         if not log_file.endswith(".json"):
             continue
@@ -187,13 +186,11 @@ def load_selected_wallets(logs_dir: str) -> dict:
         mask = (df_log["mean_time_diff"] <= mean_mean_time_diff) & (
             df_log["std_time_diff"] <= mean_std_time_diff
         )
-
         df_log = df_log[mask]
 
-        key = log_file.split(".")[0]
-        selected_wallets[key] = df_log["wallet_id"].tolist()
-        
-    return selected_wallets
+        selected_wallets.update(df_log["wallet_id"].tolist())
+
+    return list(selected_wallets)
 
 
 # _________________________________________________________________________________________________
@@ -215,17 +212,13 @@ def analyze_wallet(wallet_id: str, data: list[dict]) -> dict | None:
     Returns:
         dict or None: A dictionary containing the calculated metrics in the modules
     """
-    txs_wallet = load_wallet_bets(wallet_id, data)
-    if not txs_wallet:
-        print(f"Wallet {wallet_id} has no transactions. Skipping.")
-        return None
-    df_txs_wallet = pd.DataFrame(txs_wallet)
+    df_txs_wallet = pd.DataFrame(data)
     martingale_results = detect_martingale(df_txs_wallet)
     d_alembert_results = detect_dAlembert(df_txs_wallet)
     flat_results = detect_flat_betting(df_txs_wallet)
     return {
         "wallet_id": wallet_id,
-        "n_tx": len(txs_wallet),
+        "n_tx": len(data),
         **martingale_results,
         **d_alembert_results,
         **flat_results,
@@ -286,7 +279,7 @@ def detect_martingale(
 # _________________________________________________________________________________________________
 
 
-def summarize_gambling_results(results_dir: str) -> None:
+def summarize_gambling_results(results_dir: str, results_file_path: str) -> None:
     """
     Summarize and visualize gambling detection results across all periods.
 
@@ -294,10 +287,8 @@ def summarize_gambling_results(results_dir: str) -> None:
         results_dir (str): Directory containing the results JSON files.
     """
     all_results = []
-    for file in os.listdir(results_dir):
-        if file.endswith("_bet_analysis.json"):
-            with open(os.path.join(results_dir, file), "r", encoding="utf-8") as f:
-                all_results.extend(json.load(f))
+    with open(results_file_path, "r", encoding="utf-8") as f:
+        all_results.extend(json.load(f))
 
     if not all_results:
         print("No gambling analysis results found.")
@@ -371,29 +362,86 @@ def summarize_gambling_results(results_dir: str) -> None:
 
     # ---------- Istogram streak ----------
 
-    # per ogni algoritmo creo un istogramma che mi metta in dei bucket
-    # (1-10, 10-50, 50-100, 100+)
-    # le streak dei wallet con l'asse delle y che rappresenta il numero di wallet
-
-    # esempio: supponiamo di avere un df con la colonna 'martingale_streak'
-    # che indica la streak massima per wallet
-    # df = pd.DataFrame(...)
-
-    # definisco i bucket
-    bins = [0, 10, 50, 100, float("inf")]
-    labels = ["1-10", "10-50", "50-100", "100+"]
+    bins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 20, float("inf")]
+    labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11-20", "21+"]
 
     df["streak_bucket"] = pd.cut(
         df["martingale_max_streak"], bins=bins, labels=labels, right=True
     )
 
-    # conteggio dei wallet per bucket
     counts = df["streak_bucket"].value_counts().sort_index()
+    counts_values = counts.values
 
-    # plot
-    plt.bar(counts.index.astype(str), counts.values)
+    norm = (counts_values - counts_values.min()) / (
+        counts_values.max() - counts_values.min()
+    )
+    cmap = plt.get_cmap("cividis")
+    colors = cmap(norm)
+
+    plt.bar(counts.index.astype(str), counts.values, color=colors)
     plt.xlabel("Streak bucket")
     plt.ylabel("Number of wallets")
     plt.title("Distribution of streaks for Martingale")
-    plt.show()
- 
+    plt.savefig(os.path.join(results_dir, "martingale_streaks_histogram.png"))
+    plt.close()
+
+    # ---------- Istogram streak ----------
+
+    bins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 20, float("inf")]
+    labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11-20", "21+"]
+    df["streak_bucket"] = pd.cut(
+        df["dalembert_max_streak"], bins=bins, labels=labels, right=True
+    )
+
+    counts = df["streak_bucket"].value_counts().sort_index()
+    counts_values = counts.values
+
+    norm = (counts_values - counts_values.min()) / (
+        counts_values.max() - counts_values.min()
+    )
+    cmap = plt.get_cmap("cividis")
+    colors = cmap(norm)
+
+    plt.bar(counts.index.astype(str), counts.values, color=colors)
+    plt.xlabel("Streak bucket")
+    plt.ylabel("Number of wallets")
+    plt.title("Distribution of streaks for D'Alembert")
+    plt.savefig(os.path.join(results_dir, "dalembert_streaks_histogram.png"))
+    plt.close()
+
+    # ---------- Istogram streak ----------
+
+    bins = [0, 5, 10, 20, 50, 100, 200, 500, 1000, float("inf")]
+    labels = [
+        "0-4",
+        "5-9",
+        "10-19",
+        "20-49",
+        "50-99",
+        "100-199",
+        "200-499",
+        "500-999",
+        "1000+",
+    ]
+
+    df["streak_bucket"] = pd.cut(
+        df["flat_max_streak"], bins=bins, labels=labels, right=True
+    )
+
+    counts = df["streak_bucket"].value_counts().sort_index()
+    counts_values = counts.values
+
+    norm = (counts_values - counts_values.min()) / (
+        counts_values.max() - counts_values.min()
+    )
+    cmap = plt.get_cmap("cividis")
+    colors = cmap(norm)
+
+    plt.bar(counts.index.astype(str), counts_values, color=colors)
+    plt.xlabel("Streak bucket")
+    plt.ylabel("Number of wallets")
+    plt.title("Distribution of streaks for Flat betting")
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, "flat_streaks_histogram.png"))
+    plt.close()

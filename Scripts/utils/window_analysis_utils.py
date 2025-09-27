@@ -63,6 +63,70 @@ def load_wallet_bets(wallet_id: str, txs_file: list[dict]) -> list[dict]:
 # _________________________________________________________________________________________________
 
 
+# def load_all_wallet_bets(wallet: str, dir_chunks: str) -> list[dict]:
+#     """Load all bets for a specific wallet from all json files in a directory.
+
+#     Args:
+#         wallet (str): wallet ID
+#         dir_chunks (str): directory containing chunk json files
+
+#     Returns:
+#         list[dict]: List of all bets for the specified wallet
+#     """
+#     txs_wallet = []
+#     for file in os.listdir(dir_chunks):
+#         if file.endswith(".json"):
+#             file_path = os.path.join(dir_chunks, file)
+#             with open(file_path, "r", encoding="utf-8") as f:
+#                 txs_file = json.load(f)
+#             txs_wallet.extend(load_wallet_bets(wallet, txs_file))
+
+#     if txs_wallet:
+#         print(f"Wallet {wallet} bets loaded from all files.")
+#         return txs_wallet
+
+
+#     print(f"Wallet {wallet} has no bets in any file.")
+#     return []
+def load_all_wallet_bets(
+    selected_wallets: list[str], dir_chunks: str
+) -> dict[str, list[dict]]:
+    """
+    Load all transactions for all selected wallets into a single dictionary in RAM.
+
+    Args:
+        selected_wallets (list[str]): List of wallet IDs to include.
+        dir_chunks (str): Directory containing chunk JSON files.
+
+    Returns:
+        dict: Keys are wallet IDs, values are lists of transactions.
+    """
+    wallets_dict = {wallet_id: [] for wallet_id in selected_wallets}
+
+    for file in os.listdir(dir_chunks):
+        if not file.endswith(".json"):
+            continue
+
+        file_path = os.path.join(dir_chunks, file)
+        with open(file_path, "r", encoding="utf-8") as f:
+            txs_file = json.load(f)
+
+        for wallet_id in selected_wallets:
+            wallets_dict[wallet_id].extend(load_wallet_bets(wallet_id, txs_file))
+        print(f"\n\n\nPROCESSED FILE: {file}\n\n\n")
+
+    for wallet_id, txs in wallets_dict.items():
+        if not txs:
+            print(f"Wallet {wallet_id} has no bets in any file.")
+        else:
+            print(f"Wallet {wallet_id} bets loaded from all files ({len(txs)} txs).")
+
+    return wallets_dict
+
+
+# _________________________________________________________________________________________________
+
+
 def compute_time_differences(txs_wallet: list[dict]) -> pd.Series:
     """
     Compute time differences between consecutive transactions.
