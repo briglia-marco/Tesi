@@ -7,7 +7,6 @@ and logs the results for later review. It also skips files that have
 already been analyzed to avoid redundant computation.
 """
 
-import sys
 import os
 import pandas as pd
 import config
@@ -83,4 +82,3 @@ def run_rolling_window_analysis() -> None:
             f"You can check all chunk counts in '{config.DIRECTORY_CHUNK_METRICS}'"
             f"to choose a suitable threshold."
         )
-        sys.exit()

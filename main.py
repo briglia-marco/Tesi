@@ -27,8 +27,10 @@ def main() -> None:
     # CHUNKING DATA
     process_chunks()
 
-    # GRAPH AND METRICS
+    # CALCULATE METRICS
     interval = config.INTERVALS[0]  # 3 months
+
+    # MODIFICARE ATTRIBUTI NEO4J
     process_selected_chunks(interval)
 
     # CHUNK GLOBAL METRICS

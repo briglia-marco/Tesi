@@ -8,7 +8,11 @@ The results of the analysis are stored in the configured results directory.
 
 import os
 import config
-from Scripts.utils.gambling_utils import load_selected_wallets, analyze_period
+from Scripts.utils.gambling_utils import (
+    load_selected_wallets,
+    analyze_period,
+    summarize_gambling_results,
+)
 
 
 def run_gambling_detection() -> None:
@@ -20,9 +24,7 @@ def run_gambling_detection() -> None:
         2. Analyze each period's transactions for gambling patterns.
         3. Save the analysis results in the designated output directory.
     """
-    selected_wallets = load_selected_wallets(
-        config.DIRECTORY_LOGS, config.PERCENT_LOW_VAR_THRESHOLD
-    )
+    selected_wallets = load_selected_wallets(config.DIRECTORY_LOGS)
 
     empty_result_files = []
 
@@ -40,12 +42,9 @@ def run_gambling_detection() -> None:
         )
         for period in empty_result_files:
             print(f"  - {period}")
-        print(
-            f"Check the transaction chunks and wallet selection criteria.\n"
-            f"You might need to adjust 'PERCENT_LOW_VAR_THRESHOLD'."
-            f"'PERCENT_LOW_VAR_THRESHOLD' is now {config.PERCENT_LOW_VAR_THRESHOLD}"
-        )
 
     print(
         f"\nGambling analysis completed. Results saved in {config.DIRECTORY_RESULTS}."
     )
+
+    summarize_gambling_results(config.DIRECTORY_RESULTS)

@@ -9,10 +9,9 @@ Config file to setup directories, service and thresholds
 SERVICE = "SatoshiDice.com-original"
 TRANSACTIONS_FOR_CHUNK_THRESHOLD = 100000
 MIN_TRANSACTIONS_TO_ANALYZE_WALLET = 1000
-
 WINDOW_SIZE = 10
+
 VAR_THRESHOLD = 10
-PERCENT_LOW_VAR_THRESHOLD = 0.50
 
 DO_MERGE = False
 

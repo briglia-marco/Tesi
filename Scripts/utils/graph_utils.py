@@ -203,6 +203,7 @@ def build_txs_graph_for_chunk(
             transaction = {
                 "txid": transaction["txid"],
                 "time": transaction["time"],
+                "pos": transaction["block_pos"],
                 "amount": transaction["outputs"][0]["amount"],
                 "type": "sent",
                 "wallet_id": wallet_id,
@@ -215,6 +216,7 @@ def build_txs_graph_for_chunk(
             transaction = {
                 "txid": transaction["txid"],
                 "time": transaction["time"],
+                "pos": transaction["block_pos"],
                 "amount": transaction["amount"],
                 "type": "received",
                 "wallet_id": wallet_id,
@@ -227,12 +229,13 @@ def build_txs_graph_for_chunk(
         )
         return
 
-    list_of_transactions.sort(key=lambda x: x["time"])
+    list_of_transactions.sort(key=lambda x: (x["time"], x["pos"]))
 
     G.add_node(
         list_of_transactions[0]["txid"],
         type="transaction",
         timestamp=list_of_transactions[0]["time"],
+        pos=list_of_transactions[0]["pos"],
         amount=list_of_transactions[0]["amount"],
     )
 
@@ -244,12 +247,14 @@ def build_txs_graph_for_chunk(
             transaction["txid"],
             type="transaction",
             timestamp=transaction["time"],
+            pos=transaction["pos"],
             amount=transaction["amount"],
         )
         G.add_edge(
             prev_txid,
             transaction["txid"],
             timestamp=transaction["time"],
+            pos=transaction["pos"],
             amount=transaction["amount"],
             type=transaction["type"],
         )
@@ -280,6 +285,9 @@ def export_txs_graph_for_neo4j(
             {
                 "id": node,
                 "type": data.get("type", "unknown"),
+                "timestamp": data.get("timestamp", ""),
+                "block_pos": data.get("pos", -1),
+                "amount": data.get("amount", 0),
             }
         )
 
@@ -290,6 +298,7 @@ def export_txs_graph_for_neo4j(
                 "target": target,
                 "type": data.get("type", "unknown"),
                 "timestamp": data.get("timestamp", ""),
+                "block_pos": data.get("pos", -1),
                 "amount": data.get("amount", 0),
             }
         )

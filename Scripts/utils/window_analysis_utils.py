@@ -31,7 +31,7 @@ def load_wallet_payouts(wallet_id: str, payouts_file: list[dict]) -> list[dict]:
         and payout["outputs"]
         and payout["outputs"][0]["wallet_id"] == wallet_id
     ]
-    print("Wallet payouts loaded.")
+    print(f"Wallet {wallet_id} payouts loaded.")
     payouts_wallet_sorted = sorted(payouts_wallet, key=lambda x: x["time"])
     return payouts_wallet_sorted
 
@@ -55,7 +55,7 @@ def load_wallet_bets(wallet_id: str, txs_file: list[dict]) -> list[dict]:
         for tx in txs_file
         if tx["type"] == "received" and tx.get("wallet_id") == wallet_id
     ]
-    print("Wallet transactions loaded.")
+    print(f"Wallet {wallet_id} bet loaded.")
     txs_wallet_sorted = sorted(txs_wallet, key=lambda x: x["time"])
     return txs_wallet_sorted
 
@@ -152,7 +152,6 @@ def plot_rolling_metrics(
     wallet_id: str,
     rolling_mean: pd.Series,
     rolling_var: pd.Series,
-    low_var_threshold: float,
     service: str,
 ) -> None:
     """
@@ -167,36 +166,18 @@ def plot_rolling_metrics(
     _, axs = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
 
     axs[0].plot(rolling_mean, label="Rolling Mean (sec)", color="blue")
-    axs[0].set_ylabel("Tempo medio")
+    axs[0].set_ylabel("Mean Time")
     axs[0].set_title(f"Rolling Mean - Wallet {wallet_id}")
     # axs[0].set_yscale("log")
     axs[0].legend()
     axs[0].grid(True)
 
     axs[1].plot(rolling_var, label="Rolling Variance (sec²)", color="orange")
-    axs[1].axhline(
-        y=low_var_threshold,
-        color="red",
-        linestyle="--",
-        label=f"Soglia = {low_var_threshold}",
-    )
 
-    below_threshold = rolling_var < low_var_threshold
-    axs[1].fill_between(
-        rolling_var.index,
-        rolling_var,
-        low_var_threshold,
-        where=below_threshold,
-        interpolate=True,
-        color="red",
-        alpha=0.3,
-        label="Sotto soglia",
-    )
-
-    axs[1].set_ylabel("Varianza")
-    axs[1].set_xlabel("Indice finestra")
+    axs[1].set_ylabel("Variance")
+    axs[1].set_xlabel("Window index")
     axs[1].set_title(f"Rolling Variance - Wallet {wallet_id}")
-    axs[1].set_yscale("log")
+    # axs[1].set_yscale("log")
     axs[1].legend()
     axs[1].grid(True)
 
@@ -259,7 +240,7 @@ def analyze_wallet(
     )
 
     plot_rolling_metrics(
-        wallet_id, rolling_mean, rolling_var, var_threshold, service
+        wallet_id, rolling_mean, rolling_var, service
     )  # only saves plot to file
 
     return summary
