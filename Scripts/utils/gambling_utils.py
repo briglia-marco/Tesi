@@ -9,6 +9,7 @@ import json
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import seaborn as sns
 
 # _________________________________________________________________________________________________
@@ -297,6 +298,7 @@ def summarize_gambling_results(results_dir: str, results_file_path: str) -> None
     df = pd.DataFrame(all_results)
 
     # ---------- Statistics ----------
+
     summary = {
         "n_wallets": len(df),
         "martingale_mean_streak": df["martingale_max_streak"].mean(),
@@ -306,6 +308,7 @@ def summarize_gambling_results(results_dir: str, results_file_path: str) -> None
         "dalembert_max_streak": df["dalembert_max_streak"].max(),
         "flat_max_streak": df["flat_max_streak"].max(),
     }
+
     for key, value in summary.items():
         summary[key] = round(value, 2) if isinstance(value, float) else value
         print(f"{key}: {summary[key]}")
@@ -375,20 +378,24 @@ def summarize_gambling_results(results_dir: str, results_file_path: str) -> None
     norm = (counts_values - counts_values.min()) / (
         counts_values.max() - counts_values.min()
     )
-    cmap = plt.get_cmap("cividis")
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        "martingale_blue", ["#cce5ff", "#004c99"]
+    )
     colors = cmap(norm)
 
-    plt.bar(counts.index.astype(str), counts.values, color=colors)
-    plt.xlabel("Streak bucket")
+    plt.figure(figsize=(7, 5))
+    plt.bar(counts.index.astype(str), counts_values, color=colors, edgecolor="black")
+    plt.xlabel("Max streak")
     plt.ylabel("Number of wallets")
-    plt.title("Distribution of streaks for Martingale")
+    plt.title("Distribution of streaks for Martingale betting")
+    plt.xticks(rotation=45)
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
     plt.savefig(os.path.join(results_dir, "martingale_streaks_histogram.png"))
     plt.close()
 
     # ---------- Istogram streak ----------
 
-    bins = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 20, float("inf")]
-    labels = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11-20", "21+"]
     df["streak_bucket"] = pd.cut(
         df["dalembert_max_streak"], bins=bins, labels=labels, right=True
     )
@@ -399,13 +406,19 @@ def summarize_gambling_results(results_dir: str, results_file_path: str) -> None
     norm = (counts_values - counts_values.min()) / (
         counts_values.max() - counts_values.min()
     )
-    cmap = plt.get_cmap("cividis")
+    cmap = mcolors.LinearSegmentedColormap.from_list(
+        "dalembert_green", ["#ccffcc", "#006600"]
+    )
     colors = cmap(norm)
 
-    plt.bar(counts.index.astype(str), counts.values, color=colors)
-    plt.xlabel("Streak bucket")
+    plt.figure(figsize=(7, 5))
+    plt.bar(counts.index.astype(str), counts_values, color=colors, edgecolor="black")
+    plt.xlabel("Max streak")
     plt.ylabel("Number of wallets")
-    plt.title("Distribution of streaks for D'Alembert")
+    plt.title("Distribution of streaks for D'Alembert betting")
+    plt.xticks(rotation=45)
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
     plt.savefig(os.path.join(results_dir, "dalembert_streaks_histogram.png"))
     plt.close()
 
@@ -434,14 +447,16 @@ def summarize_gambling_results(results_dir: str, results_file_path: str) -> None
     norm = (counts_values - counts_values.min()) / (
         counts_values.max() - counts_values.min()
     )
-    cmap = plt.get_cmap("cividis")
+    cmap = mcolors.LinearSegmentedColormap.from_list("flat_red", ["#ffcccc", "#cc0000"])
     colors = cmap(norm)
 
-    plt.bar(counts.index.astype(str), counts_values, color=colors)
-    plt.xlabel("Streak bucket")
+    plt.figure(figsize=(7, 5))
+    plt.bar(counts.index.astype(str), counts_values, color=colors, edgecolor="black")
+    plt.xlabel("Max streak")
     plt.ylabel("Number of wallets")
     plt.title("Distribution of streaks for Flat betting")
     plt.xticks(rotation=45)
+    plt.grid(alpha=0.3)
     plt.tight_layout()
     plt.savefig(os.path.join(results_dir, "flat_streaks_histogram.png"))
     plt.close()

@@ -8,7 +8,9 @@ time differences between bets, identifies patterns, and generates plots.
 import os
 import json
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+from numpy.lib.stride_tricks import sliding_window_view
 
 # _________________________________________________________________________________________________
 
@@ -63,31 +65,6 @@ def load_wallet_bets(wallet_id: str, txs_file: list[dict]) -> list[dict]:
 # _________________________________________________________________________________________________
 
 
-# def load_all_wallet_bets(wallet: str, dir_chunks: str) -> list[dict]:
-#     """Load all bets for a specific wallet from all json files in a directory.
-
-#     Args:
-#         wallet (str): wallet ID
-#         dir_chunks (str): directory containing chunk json files
-
-#     Returns:
-#         list[dict]: List of all bets for the specified wallet
-#     """
-#     txs_wallet = []
-#     for file in os.listdir(dir_chunks):
-#         if file.endswith(".json"):
-#             file_path = os.path.join(dir_chunks, file)
-#             with open(file_path, "r", encoding="utf-8") as f:
-#                 txs_file = json.load(f)
-#             txs_wallet.extend(load_wallet_bets(wallet, txs_file))
-
-#     if txs_wallet:
-#         print(f"Wallet {wallet} bets loaded from all files.")
-#         return txs_wallet
-
-
-#     print(f"Wallet {wallet} has no bets in any file.")
-#     return []
 def load_all_wallet_bets(
     selected_wallets: list[str], dir_chunks: str
 ) -> dict[str, list[dict]]:
@@ -127,40 +104,43 @@ def load_all_wallet_bets(
 # _________________________________________________________________________________________________
 
 
-def compute_time_differences(txs_wallet: list[dict]) -> pd.Series:
+def compute_time_differences(txs_wallet: list[dict]) -> np.ndarray:
     """
-    Compute time differences between consecutive transactions.
+    Compute time differences between consecutive transactions in seconds.
 
     Args:
         txs_wallet (list): List of transactions for a specific wallet.
 
     Returns:
-        pd.Series: A pandas Series containing the time differences in seconds.
+        np.ndarray: Array of time differences in seconds.
     """
-    timestamps = pd.to_datetime([tx["time"] for tx in txs_wallet], unit="s")
-    time_diffs = timestamps.diff().total_seconds().dropna()
-    return pd.Series(time_diffs)
+    timestamps = np.array([tx["time"] for tx in txs_wallet], dtype=float)
+    time_diffs = np.diff(timestamps)
+    return time_diffs
 
 
 # _________________________________________________________________________________________________
 
 
 def compute_rolling_metrics(
-    time_diffs_series: pd.Series, window_size: int = 10
-) -> tuple[pd.Series, pd.Series]:
+    time_diffs: np.ndarray, window_size: int = 10
+) -> tuple[np.ndarray, np.ndarray]:
     """
-    Compute rolling metrics for time differences.
+    Compute rolling mean and variance for time differences using numpy.
 
     Args:
-        time_diffs_series (pd.Series): Pandas Series containing time
-        differences.
-        window_size (int, optional): The size of the rolling window.
+        time_diffs (np.ndarray): Array of time differences.
+        window_size (int): Size of the rolling window.
 
     Returns:
-        tuple: A tuple containing the rolling mean and rolling variance.
+        tuple: (rolling_mean, rolling_var) as numpy arrays.
     """
-    rolling_mean = time_diffs_series.rolling(window_size).mean()
-    rolling_var = time_diffs_series.rolling(window_size).var()
+    if len(time_diffs) < window_size:
+        return np.array([]), np.array([])
+
+    windows = sliding_window_view(time_diffs, window_shape=window_size)
+    rolling_mean = windows.mean(axis=1)
+    rolling_var = windows.var(axis=1, ddof=1)
     return rolling_mean, rolling_var
 
 
@@ -170,42 +150,49 @@ def compute_rolling_metrics(
 def summarize_wallet_behavior(
     wallet_id: str,
     txs_wallet: list[dict],
-    time_diffs_series: pd.Series,
-    rolling_var: pd.Series,
+    time_diffs: np.ndarray,
+    rolling_var: np.ndarray,
     low_var_threshold: float,
 ) -> dict:
     """
-    Summarize the behavior of a wallet based on its transaction history.
+    Summarize the behavior of a wallet based on its transaction history using numpy.
 
     Args:
-        wallet_id (_type_): _description_
-        txs_wallet (_type_): _description_
-        time_diffs_series (_type_): _description_
-        rolling_var (_type_): _description_
-        low_var_threshold (_type_): _description_
+        wallet_id (str): Wallet ID.
+        txs_wallet (list): List of transactions.
+        time_diffs (np.ndarray): Array of time differences.
+        rolling_var (np.ndarray): Array of rolling variance.
+        low_var_threshold (float): Threshold for low variance windows.
 
     Returns:
-        _type_: _description_
+        dict: Summary of wallet behavior.
     """
-    low_var_mask = (rolling_var < low_var_threshold).astype(int)
-    group_keys = (low_var_mask != low_var_mask.shift()).cumsum()
-    groups = low_var_mask.groupby(group_keys)
-    long_streaks = groups.sum().sort_values(
-        ascending=False
-    )  # Get the longest streaks of low variance
+    if len(rolling_var) == 0:
+        percent_low_var_windows = 0.0
+        longest_low_var_streak = 0
+    else:
+        low_var_mask = rolling_var < low_var_threshold
+        percent_low_var_windows = round(float(low_var_mask.sum() / len(rolling_var)), 2)
+
+        streaks = (
+            np.diff(np.where(np.concatenate(([0], low_var_mask.astype(int), [0])) == 0))
+            - 1
+        )
+        if len(streaks) > 0:
+            longest_low_var_streak = int(streaks.max())
+        else:
+            longest_low_var_streak = 0
+
+    mean_time_diff = round(float(time_diffs.mean()), 2) if len(time_diffs) > 0 else 0.0
+    std_time_diff = round(float(time_diffs.std()), 2) if len(time_diffs) > 0 else 0.0
 
     return {
         "wallet_id": str(wallet_id),
         "n_tx": int(len(txs_wallet)),
-        "percent_low_var_windows": round(
-            float((rolling_var < low_var_threshold).sum() / len(rolling_var)),
-            2,
-        ),
-        "longest_low_var_streak": (
-            int(long_streaks.iloc[0]) if not long_streaks.empty else 0
-        ),
-        "mean_time_diff": round(float(time_diffs_series.mean()), 2),
-        "std_time_diff": round(float(time_diffs_series.std()), 2),
+        "percent_low_var_windows": percent_low_var_windows,
+        "longest_low_var_streak": longest_low_var_streak,
+        "mean_time_diff": mean_time_diff,
+        "std_time_diff": std_time_diff,
     }
 
 
@@ -214,8 +201,8 @@ def summarize_wallet_behavior(
 
 def plot_rolling_metrics(
     wallet_id: str,
-    rolling_mean: pd.Series,
-    rolling_var: pd.Series,
+    rolling_mean: np.ndarray,
+    rolling_var: np.ndarray,
     service: str,
 ) -> None:
     """
@@ -223,45 +210,37 @@ def plot_rolling_metrics(
 
     Args:
         wallet_id (str): The ID of the wallet.
-        rolling_mean (pd.Series): The rolling mean of time differences.
-        rolling_var (pd.Series): The rolling variance of time differences.
-        low_var_threshold (float): The threshold for low variance.
+        rolling_mean (np.ndarray): Rolling mean of time differences.
+        rolling_var (np.ndarray): Rolling variance of time differences.
+        service (str): Service name.
     """
     _, axs = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
 
     axs[0].plot(rolling_mean, label="Rolling Mean (sec)", color="blue")
     axs[0].set_ylabel("Mean Time")
     axs[0].set_title(f"Rolling Mean - Wallet {wallet_id}")
-    # axs[0].set_yscale("log")
     axs[0].legend()
     axs[0].grid(True)
 
     axs[1].plot(rolling_var, label="Rolling Variance (sec²)", color="orange")
-
     axs[1].set_ylabel("Variance")
     axs[1].set_xlabel("Window index")
     axs[1].set_title(f"Rolling Variance - Wallet {wallet_id}")
-    # axs[1].set_yscale("log")
     axs[1].legend()
     axs[1].grid(True)
 
     os.makedirs(f"Data/chunks/{service}/plots", exist_ok=True)
     plt.savefig(f"Data/chunks/{service}/plots/rolling_metrics_{wallet_id}.png")
     plt.close()
-    # plt.tight_layout()
-    # plt.show()
 
 
 # _________________________________________________________________________________________________
 
 
 def analyze_wallet(
-    period_metrics_file: str,
-    metrics_dir: str,
-    json_dir: str,
+    wallet_id: str,
+    txs_file: dict,
     service: str,
-    wallet_index: int = 0,
-    wallet_id_override: str | None = None,
     window_size: int = 10,
     var_threshold: float = 10,
 ) -> dict:
@@ -269,33 +248,16 @@ def analyze_wallet(
     Analyze a wallet's betting behavior over a specified period.
 
     Args:
-        period_metrics_file (str): The file containing metrics for the period.
-        metrics_dir (str): Directory containing the metrics files.
-        json_dir (str): Directory containing the JSON files for the period.
-        wallet_index (int, optional): Index of the wallet to analyze
-        wallet_id_override (str, optional): Direct wallet ID to analyze.
-        Overrides index-based selection.
+        wallet_id (str): The wallet ID to analyze.
+        txs_file (dict): Preloaded JSON of transactions.
+        df (pd.DataFrame): Preloaded metrics DataFrame.
+        service (str): Service name.
         window_size (int, optional): Size of the rolling window.
         var_threshold (float, optional): Threshold for low variance.
 
     Returns:
         dict: A summary of the wallet's behavior.
     """
-    df = pd.read_excel(f"{metrics_dir}/{period_metrics_file}")
-    df_sorted = df.sort_values(by="in_degree", ascending=False)
-
-    if wallet_id_override is not None:
-        wallet_id = wallet_id_override
-    else:
-        wallet_id = df_sorted.iloc[wallet_index]["wallet_id"]
-
-    period_name = os.path.splitext(period_metrics_file)[0] + ".json"
-    txs_file_path = os.path.join(json_dir, period_name)
-    token = txs_file_path.split(".")
-    txs_file_path = token[0] + "." + token[1] + "." + token[3]
-    with open(txs_file_path, "r", encoding="utf-8") as f:
-        txs_file = json.load(f)
-
     txs_wallet = load_wallet_bets(wallet_id, txs_file)
     time_diff = compute_time_differences(txs_wallet)
     rolling_mean, rolling_var = compute_rolling_metrics(time_diff, window_size)
@@ -303,9 +265,7 @@ def analyze_wallet(
         wallet_id, txs_wallet, time_diff, rolling_var, var_threshold
     )
 
-    plot_rolling_metrics(
-        wallet_id, rolling_mean, rolling_var, service
-    )  # only saves plot to file
+    plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, service)
 
     return summary
 
@@ -313,7 +273,7 @@ def analyze_wallet(
 # _________________________________________________________________________________________________
 
 
-def get_wallets_meeting_criteria(metrics_path: str, min_tx: int) -> list[str]:
+def get_wallets_meeting_criteria(df: pd.DataFrame, min_tx: int) -> list[str]:
     """
     Get a list of wallet IDs that meet the specified criteria.
 
@@ -324,10 +284,7 @@ def get_wallets_meeting_criteria(metrics_path: str, min_tx: int) -> list[str]:
     Returns:
         list: A list of wallet IDs that meet the criteria.
     """
-    print(f"Loading metrics from: {metrics_path}")
-    df = pd.read_excel(metrics_path)
     filtered = df[df["in_degree"] >= min_tx]
-
     return filtered["wallet_id"].tolist()
 
 
@@ -433,9 +390,18 @@ def analyze_wallets_for_file(
     Returns:
         dict: A log report containing the analysis results.
     """
-    wallet_ids = get_wallets_meeting_criteria(
-        os.path.join(metrics_dir, metrics_file), min_tx=min_tx
-    )
+
+    period_name = os.path.splitext(metrics_file)[0] + ".json"
+    txs_file_path = os.path.join(json_dir, period_name)
+    token = txs_file_path.split(".")
+    txs_file_path = token[0] + "." + token[1] + "." + token[3]
+    with open(txs_file_path, "r", encoding="utf-8") as f:
+        txs_file = json.load(f)
+
+    df = pd.read_excel(f"{metrics_dir}/{metrics_file}")
+    df_sorted = df.sort_values(by="in_degree", ascending=False)
+
+    wallet_ids = get_wallets_meeting_criteria(df_sorted, min_tx=min_tx)
 
     log_report = {"min_transactions": min_tx, "wallets": []}
 
@@ -444,11 +410,9 @@ def analyze_wallets_for_file(
 
     for wallet_id in wallet_ids:
         summary = analyze_wallet(
-            period_metrics_file=metrics_file,
-            metrics_dir=metrics_dir,
-            json_dir=json_dir,
+            wallet_id=wallet_id,
+            txs_file=txs_file,
             service=service,
-            wallet_id_override=wallet_id,
             window_size=window_size,
             var_threshold=var_threshold,
         )
