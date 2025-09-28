@@ -391,10 +391,8 @@ def analyze_wallets_for_file(
         dict: A log report containing the analysis results.
     """
 
-    period_name = os.path.splitext(metrics_file)[0] + ".json"
+    period_name = metrics_file.replace(".json_metrics.xlsx", ".json")
     txs_file_path = os.path.join(json_dir, period_name)
-    token = txs_file_path.split(".")
-    txs_file_path = token[0] + "." + token[1] + "." + token[3]
     with open(txs_file_path, "r", encoding="utf-8") as f:
         txs_file = json.load(f)
 

@@ -55,4 +55,4 @@ def process_chunks() -> None:
             output_dir=config.DIRECTORY_XLSX,
         )
     else:
-        print("[INFO] All chunk reports already exist, skipping generation.")
+        print("\n[INFO] All chunk reports already exist, skipping generation.\n")

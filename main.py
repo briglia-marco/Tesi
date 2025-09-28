@@ -4,6 +4,7 @@ analyzing, and detecting gambling patterns in cryptocurrency wallet data.
 """
 
 import config
+import time
 from Scripts.build_graph import process_selected_chunks
 from Scripts.rolling_window import run_rolling_window_analysis
 from Scripts.gambling_detection import run_gambling_detection
@@ -20,6 +21,7 @@ def main() -> None:
     transactions of the selected wallets.
     """
 
+    start_time = time.time()
     # DOWNLOAD DATA
     run_download_pipeline(config.DO_MERGE)
 
@@ -35,6 +37,9 @@ def main() -> None:
 
     # DETECTION OF GAMBLING PATTERN
     run_gambling_detection()
+
+    end_time = time.time()
+    print(f"\nExecution time: {end_time - start_time} seconds")
 
 
 if __name__ == "__main__":

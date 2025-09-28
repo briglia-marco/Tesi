@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import seaborn as sns
 
+
 # _________________________________________________________________________________________________
 
 
@@ -332,8 +333,6 @@ def summarize_gambling_results(results_dir: str, results_file_path: str) -> None
                 edgecolor="black",
             )
 
-        sns.kdeplot(data, color="black", linewidth=1.2)
-
         plt.title(f"Distribution of {algo}", fontsize=14)
         plt.xlabel("Ratio")
         plt.ylabel("Count")
@@ -460,3 +459,25 @@ def summarize_gambling_results(results_dir: str, results_file_path: str) -> None
     plt.tight_layout()
     plt.savefig(os.path.join(results_dir, "flat_streaks_histogram.png"))
     plt.close()
+
+    # ---------- Dot plot (strip plot) ----------
+
+    algos = ["martingale_ratio", "dalembert_ratio", "flat_ratio"]
+    colors = ["Blues", "Greens", "Reds"]
+
+    for algo, cmap in zip(algos, colors):
+        data = df[algo].dropna()
+
+        counts = data.value_counts().sort_index()
+        x = counts.index
+        y = counts.values
+
+        plt.figure(figsize=(7, 5))
+        plt.scatter(x, y, s=30, color=plt.cm.get_cmap(cmap)(0.7))
+        plt.xlabel("Ratio")
+        plt.ylabel("Wallets")
+        plt.title(f"Dot plot of {algo}")
+        plt.grid(alpha=0.3)
+        plt.tight_layout()
+        plt.savefig(os.path.join(results_dir, f"{algo}_dot.png"))
+        plt.close()

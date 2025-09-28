@@ -76,9 +76,9 @@ def run_rolling_window_analysis() -> None:
             f"({config.MIN_TRANSACTIONS_TO_ANALYZE_WALLET}):"
         )
         for f in empty_files:
-            print(f"  - {f} (max wallet transactions: {max_wallets_per_file[f]})\n")
+            print(f"  - {f} (max wallet transactions: {max_wallets_per_file[f]})")
         print(
             f"Consider adjusting 'MIN_TRANSACTIONS_TO_ANALYZE_WALLET' in the config.\n"
             f"You can check all chunk counts in '{config.DIRECTORY_CHUNK_METRICS}'"
-            f"to choose a suitable threshold."
+            f"to choose a suitable threshold.\n"
         )
