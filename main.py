@@ -3,8 +3,8 @@ This script orchestrates the entire process of downloading, processing,
 analyzing, and detecting gambling patterns in cryptocurrency wallet data.
 """
 
-import config
 import time
+import config
 from Scripts.build_graph import process_selected_chunks
 from Scripts.rolling_window import run_rolling_window_analysis
 from Scripts.gambling_detection import run_gambling_detection
@@ -22,6 +22,7 @@ def main() -> None:
     """
 
     start_time = time.time()
+
     # DOWNLOAD DATA
     run_download_pipeline(config.DO_MERGE)
 

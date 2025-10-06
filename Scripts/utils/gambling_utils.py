@@ -11,6 +11,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 import seaborn as sns
+import config
 
 
 # _________________________________________________________________________________________________
@@ -481,3 +482,153 @@ def summarize_gambling_results(results_dir: str, results_file_path: str) -> None
         plt.tight_layout()
         plt.savefig(os.path.join(results_dir, f"{algo}_dot.png"))
         plt.close()
+
+    # ---------- Distribution of wallets across periods ----------
+
+    periods = [f for f in os.listdir(config.DIRECTORY_LOGS) if f.endswith(".json")]
+    wallet_stats = {}
+
+    for period in periods:
+        with open(
+            os.path.join(config.DIRECTORY_LOGS, period), "r", encoding="utf-8"
+        ) as f:
+            data = json.load(f)
+        df_log = pd.DataFrame(data["wallets"])
+
+        for _, row in df_log.iterrows():
+            wallet_id = row["wallet_id"]
+            mean_time_diff = row["mean_time_diff"]
+            std_time_diff = row["std_time_diff"]
+
+            if wallet_id not in wallet_stats:
+                wallet_stats[wallet_id] = {
+                    "count": 1,
+                    "mean_time_diff": mean_time_diff,
+                    "std_time_diff": std_time_diff,
+                }
+            else:
+                wallet_stats[wallet_id]["count"] += 1
+                if mean_time_diff < wallet_stats[wallet_id]["mean_time_diff"]:
+                    wallet_stats[wallet_id]["mean_time_diff"] = mean_time_diff
+                if std_time_diff < wallet_stats[wallet_id]["std_time_diff"]:
+                    wallet_stats[wallet_id]["std_time_diff"] = std_time_diff
+
+    df_wallet_stats = pd.DataFrame.from_dict(wallet_stats, orient="index")
+    counts = df_wallet_stats["count"].value_counts().sort_index()
+    color = plt.cm.get_cmap("Blues")(0.7)
+
+    plt.figure(figsize=(7, 5))
+    bars = plt.bar(
+        counts.index.astype(str), counts.values, color=color, edgecolor="black"
+    )
+    plt.bar_label(
+        bars, labels=counts.values, label_type="edge", fontsize=10, fontweight="bold"
+    )
+    plt.xlabel("Number of periods")
+    plt.ylabel("Number of wallets")
+    plt.title("Distribution of wallets across different periods")
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, "wallets_distribution_over_periods.png"))
+    plt.close()
+
+    # ---------- Distribution of mean time diffs across wallets ----------
+
+    step = 600
+    max_val = 18000
+    # max_val = df_wallet_stats["mean_time_diff"].max()
+
+    bins = np.arange(0, max_val + step, step)
+    labels = [f"{int(bins[i])}-{int(bins[i+1])}" for i in range(len(bins) - 1)]
+
+    buckets = pd.cut(
+        df_wallet_stats["mean_time_diff"], bins=bins, labels=labels, right=False
+    )
+
+    x = buckets.value_counts().sort_index().index.astype(str)
+    y = buckets.value_counts().sort_index().values
+    color = plt.cm.get_cmap("Blues")(0.7)
+
+    plt.figure(figsize=(7, 5))
+    plt.bar(
+        x,
+        y,
+        color=color,
+        edgecolor="black",
+    )
+    plt.plot(x, y, color="red", marker="o", linestyle="-", alpha=0.5)
+    plt.xlabel("Mean time diff (s)")
+    plt.ylabel("Number of wallets")
+    plt.title("Distribution of mean time diffs across wallets")
+    plt.xticks(rotation=90)
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, "mean_time_diffs_distribution.png"))
+    plt.close()
+
+    # ---------- Distribution of std time diffs across wallets ----------
+
+    step = 1800
+    max_val = 45000
+    # max_val = df_wallet_stats["std_time_diff"].max()
+
+    bins = np.arange(0, max_val + step, step)
+    labels = [f"{int(bins[i])}-{int(bins[i+1])}" for i in range(len(bins) - 1)]
+
+    buckets = pd.cut(
+        df_wallet_stats["std_time_diff"], bins=bins, labels=labels, right=False
+    )
+
+    x = buckets.value_counts().sort_index().index.astype(str)
+    y = buckets.value_counts().sort_index().values
+    color = plt.cm.get_cmap("Greens")(0.7)
+
+    plt.figure(figsize=(7, 5))
+    plt.bar(
+        x,
+        y,
+        color=color,
+        edgecolor="black",
+    )
+    plt.plot(x, y, color="red", marker="o", linestyle="-", alpha=0.5)
+    plt.xlabel("Std time diff (s)")
+    plt.ylabel("Number of wallets")
+    plt.title("Distribution of std time diffs across wallets")
+    plt.xticks(rotation=90)
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, "std_time_diffs_distribution.png"))
+    plt.close()
+
+    # ---------- Distribution snapshot of std time diffs across wallets ----------
+
+    step = 500
+    max_val = 7200  # fisso
+
+    bins = np.arange(0, max_val + step, step)
+    labels = [f"{int(bins[i])}-{int(bins[i+1])}" for i in range(len(bins) - 1)]
+
+    buckets = pd.cut(
+        df_wallet_stats["std_time_diff"], bins=bins, labels=labels, right=False
+    )
+
+    x = buckets.value_counts().sort_index().index.astype(str)
+    y = buckets.value_counts().sort_index().values
+    color = plt.cm.get_cmap("Greens")(0.7)
+
+    plt.figure(figsize=(7, 5))
+    plt.bar(
+        x,
+        y,
+        color=color,
+        edgecolor="black",
+    )
+    plt.plot(x, y, color="red", marker="o", linestyle="-", alpha=0.5)
+    plt.xlabel("Std time diff (s)")
+    plt.ylabel("Number of wallets")
+    plt.title("Distribution of std time diffs across wallets (0-10000)")
+    plt.xticks(rotation=90)
+    plt.grid(alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(os.path.join(results_dir, "std_time_diffs_distribution_snapshot.png"))
+    plt.close()

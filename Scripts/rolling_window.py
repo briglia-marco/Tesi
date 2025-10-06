@@ -51,7 +51,6 @@ def run_rolling_window_analysis() -> None:
             config.DIRECTORY_CHUNKS,
             config.SERVICE,
             config.WINDOW_SIZE,
-            config.VAR_THRESHOLD,
             config.MIN_TRANSACTIONS_TO_ANALYZE_WALLET,
         )
         save_log(log_file_path, log_report)

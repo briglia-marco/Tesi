@@ -136,12 +136,13 @@ def compute_rolling_metrics(
         tuple: (rolling_mean, rolling_var) as numpy arrays.
     """
     if len(time_diffs) < window_size:
-        return np.array([]), np.array([])
+        return np.array([]), np.array([]), np.array([])
 
     windows = sliding_window_view(time_diffs, window_shape=window_size)
     rolling_mean = windows.mean(axis=1)
     rolling_var = windows.var(axis=1, ddof=1)
-    return rolling_mean, rolling_var
+    rolling_std = windows.std(axis=1, ddof=1)
+    return rolling_mean, rolling_var, rolling_std
 
 
 # _________________________________________________________________________________________________
@@ -152,7 +153,7 @@ def summarize_wallet_behavior(
     txs_wallet: list[dict],
     time_diffs: np.ndarray,
     rolling_var: np.ndarray,
-    low_var_threshold: float,
+    rolling_std: np.ndarray,
 ) -> dict:
     """
     Summarize the behavior of a wallet based on its transaction history using numpy.
@@ -162,37 +163,25 @@ def summarize_wallet_behavior(
         txs_wallet (list): List of transactions.
         time_diffs (np.ndarray): Array of time differences.
         rolling_var (np.ndarray): Array of rolling variance.
-        low_var_threshold (float): Threshold for low variance windows.
+        rolling_std (np.ndarray): Array of rolling standard deviation.
 
     Returns:
         dict: Summary of wallet behavior.
     """
-    if len(rolling_var) == 0:
-        percent_low_var_windows = 0.0
-        longest_low_var_streak = 0
-    else:
-        low_var_mask = rolling_var < low_var_threshold
-        percent_low_var_windows = round(float(low_var_mask.sum() / len(rolling_var)), 2)
-
-        streaks = (
-            np.diff(np.where(np.concatenate(([0], low_var_mask.astype(int), [0])) == 0))
-            - 1
-        )
-        if len(streaks) > 0:
-            longest_low_var_streak = int(streaks.max())
-        else:
-            longest_low_var_streak = 0
-
     mean_time_diff = round(float(time_diffs.mean()), 2) if len(time_diffs) > 0 else 0.0
-    std_time_diff = round(float(time_diffs.std()), 2) if len(time_diffs) > 0 else 0.0
+    var_time_diff = round(float(rolling_var.mean()), 2) if len(rolling_var) > 0 else 0.0
+    std_time_diff = round(float(rolling_std.mean()), 2) if len(rolling_std) > 0 else 0.0
+    cv_time_diff = (
+        round(std_time_diff / mean_time_diff, 3) if mean_time_diff != 0 else 0.0
+    )
 
     return {
         "wallet_id": str(wallet_id),
         "n_tx": int(len(txs_wallet)),
-        "percent_low_var_windows": percent_low_var_windows,
-        "longest_low_var_streak": longest_low_var_streak,
         "mean_time_diff": mean_time_diff,
+        "var_time_diff": var_time_diff,
         "std_time_diff": std_time_diff,
+        "cv_time_diff": cv_time_diff,
     }
 
 
@@ -202,16 +191,16 @@ def summarize_wallet_behavior(
 def plot_rolling_metrics(
     wallet_id: str,
     rolling_mean: np.ndarray,
-    rolling_var: np.ndarray,
+    rolling_std: np.ndarray,
     service: str,
 ) -> None:
     """
-    Plot the rolling mean and variance of time differences for a wallet.
+    Plot the rolling mean and standard deviation of time differences for a wallet.
 
     Args:
         wallet_id (str): The ID of the wallet.
         rolling_mean (np.ndarray): Rolling mean of time differences.
-        rolling_var (np.ndarray): Rolling variance of time differences.
+        rolling_std (np.ndarray): Rolling standard deviation of time differences.
         service (str): Service name.
     """
     _, axs = plt.subplots(2, 1, figsize=(14, 8), sharex=True)
@@ -222,10 +211,10 @@ def plot_rolling_metrics(
     axs[0].legend()
     axs[0].grid(True)
 
-    axs[1].plot(rolling_var, label="Rolling Variance (sec²)", color="orange")
-    axs[1].set_ylabel("Variance")
+    axs[1].plot(rolling_std, label="Rolling Standard Deviation (sec)", color="orange")
+    axs[1].set_ylabel("Standard Deviation Time")
     axs[1].set_xlabel("Window index")
-    axs[1].set_title(f"Rolling Variance - Wallet {wallet_id}")
+    axs[1].set_title(f"Rolling Standard Deviation - Wallet {wallet_id}")
     axs[1].legend()
     axs[1].grid(True)
 
@@ -242,7 +231,6 @@ def analyze_wallet(
     txs_file: dict,
     service: str,
     window_size: int = 10,
-    var_threshold: float = 10,
 ) -> dict:
     """
     Analyze a wallet's betting behavior over a specified period.
@@ -260,12 +248,18 @@ def analyze_wallet(
     """
     txs_wallet = load_wallet_bets(wallet_id, txs_file)
     time_diff = compute_time_differences(txs_wallet)
-    rolling_mean, rolling_var = compute_rolling_metrics(time_diff, window_size)
+    rolling_mean, rolling_var, rolling_std = compute_rolling_metrics(
+        time_diff, window_size
+    )
     summary = summarize_wallet_behavior(
-        wallet_id, txs_wallet, time_diff, rolling_var, var_threshold
+        wallet_id,
+        txs_wallet,
+        time_diff,
+        rolling_var,
+        rolling_std,
     )
 
-    plot_rolling_metrics(wallet_id, rolling_mean, rolling_var, service)
+    plot_rolling_metrics(wallet_id, rolling_mean, rolling_std, service)
 
     return summary
 
@@ -372,7 +366,6 @@ def analyze_wallets_for_file(
     json_dir: str,
     service: str,
     window_size: int,
-    var_threshold: float,
     min_tx: int,
 ) -> dict:
     """
@@ -412,7 +405,6 @@ def analyze_wallets_for_file(
             txs_file=txs_file,
             service=service,
             window_size=window_size,
-            var_threshold=var_threshold,
         )
         if summary.get("n_tx", 0) >= min_tx:
             log_report["wallets"].append(summary)
