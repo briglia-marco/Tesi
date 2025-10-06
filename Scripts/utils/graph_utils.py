@@ -196,19 +196,17 @@ def build_txs_graph_for_chunk(
 
     list_of_transactions = []
     for transaction in transactions:
-        if (
-            transaction["type"] == "sent"
-            and transaction["outputs"][0]["wallet_id"] == wallet_id
-        ):
-            transaction = {
-                "txid": transaction["txid"],
-                "time": transaction["time"],
-                "pos": transaction["block_pos"],
-                "amount": transaction["outputs"][0]["amount"],
-                "type": "sent",
-                "wallet_id": wallet_id,
-            }
-            list_of_transactions.append(transaction)
+        if transaction["type"] == "sent" and transaction["outputs"]:
+            if transaction["outputs"][0]["wallet_id"] == wallet_id:
+                transaction = {
+                    "txid": transaction["txid"],
+                    "time": transaction["time"],
+                    "pos": transaction["block_pos"],
+                    "amount": transaction["outputs"][0]["amount"],
+                    "type": "sent",
+                    "wallet_id": wallet_id,
+                }
+                list_of_transactions.append(transaction)
 
         elif (
             transaction["type"] == "received" and transaction["wallet_id"] == wallet_id
@@ -237,26 +235,29 @@ def build_txs_graph_for_chunk(
         timestamp=list_of_transactions[0]["time"],
         pos=list_of_transactions[0]["pos"],
         amount=list_of_transactions[0]["amount"],
+        type_of_tx=list_of_transactions[0]["type"],
     )
 
-    for transaction in list_of_transactions[1:]:
-        prev_txid = list_of_transactions[list_of_transactions.index(transaction) - 1][
-            "txid"
-        ]
+    for i in range(1, len(list_of_transactions)):
+        prev_transaction = list_of_transactions[i - 1]
+        current_transaction = list_of_transactions[i]
+
         G.add_node(
-            transaction["txid"],
+            current_transaction["txid"],
             type="transaction",
-            timestamp=transaction["time"],
-            pos=transaction["pos"],
-            amount=transaction["amount"],
+            timestamp=current_transaction["time"],
+            pos=current_transaction["pos"],
+            amount=current_transaction["amount"],
+            type_of_tx=current_transaction["type"],
         )
+
         G.add_edge(
-            prev_txid,
-            transaction["txid"],
-            timestamp=transaction["time"],
-            pos=transaction["pos"],
-            amount=transaction["amount"],
-            type=transaction["type"],
+            prev_transaction["txid"],
+            current_transaction["txid"],
+            timestamp=prev_transaction["time"],
+            pos=prev_transaction["pos"],
+            amount=prev_transaction["amount"],
+            type_of_tx=prev_transaction["type"],
         )
 
     export_txs_graph_for_neo4j(G, output_dir, wallet_id, chunk_to_process)
@@ -288,6 +289,7 @@ def export_txs_graph_for_neo4j(
                 "timestamp": data.get("timestamp", ""),
                 "block_pos": data.get("pos", -1),
                 "amount": data.get("amount", 0),
+                "type_of_tx": data.get("type_of_tx", ""),
             }
         )
 
@@ -300,6 +302,7 @@ def export_txs_graph_for_neo4j(
                 "timestamp": data.get("timestamp", ""),
                 "block_pos": data.get("pos", -1),
                 "amount": data.get("amount", 0),
+                "type_of_tx": data.get("type_of_tx", ""),
             }
         )
 
